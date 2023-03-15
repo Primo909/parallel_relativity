@@ -20,9 +20,6 @@ CC := g++ -std=c++17
 
 VPATH = main:src
 
-ROOTLIB := $(shell root-config --libs)
-ROOTINC := $(shell root-config --incdir)
-
 SRC := $(wildcard src/*.C)
 OBJ := $(patsubst %.C, $(BINDIR)/%.o, $(notdir $(SRC)))
 INC := $(wildcard src/*.h)
