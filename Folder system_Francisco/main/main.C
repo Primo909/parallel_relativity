@@ -15,6 +15,7 @@ float XMax=1;
 int N=(XMax-XMin)/dx;
 
 
+
 int main(){
 
   GRID1D GRID= GRID1D(XMax,XMin,dx);

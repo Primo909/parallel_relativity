@@ -2,6 +2,10 @@
     "files.associations": {
         "main.C": "cpp",
         "Var1D.C": "cpp",
-        "Grid1D.C": "cpp"
+        "Grid1D.C": "cpp",
+        "cmath": "cpp",
+        "new": "cpp",
+        "iomanip": "cpp",
+        "iostream": "cpp"
     }
 }
