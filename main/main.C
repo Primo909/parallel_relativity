@@ -2,22 +2,24 @@
 //Project 2 - The Parallelized Solution of Time Evolution PDEs
 //by
 //Catarina Corte-Real ist191035
-//Francisco Valério Raposo ist19651
+//Francisco Valério Raposo ist196531
 //Kevin Steiner ist1107611
 
 //One dimensional standard wave equation
+
 #include <cstdio>
 #include <iostream>
 #include <fstream>
 #include <cmath>
 #include <vector>
 #include <iomanip> 
+#include <string>
 
-#include "header.h"
+//#include "src/ header.h"
 
 using namespace std;
 
-const double dx=1E-3; //Space discretization (uniform)
+const double dx=1E-2; //Space discretization (uniform)
 const double dt=1E-3; //Time discret.
 const double x_min=0, x_max=1; //Space interval 
 const double simul_time = 0.1; //Simulation time
@@ -25,6 +27,27 @@ const int number_iterations = simul_time / dt; //Number of iterations
 const int N=(x_max - x_min) / dx; //Number of spatial cells
 const int number_ghosts = 3; // Number of ghost cells
 
+const string File_String= "./Data/numerical_phi_ite";
+
+
+void Saving_Data_File(double* state_vector, int iteration){
+
+    string string_aux=File_String+to_string(iteration+1)+".dat";
+    
+    fstream ITERATION_FILE;
+    ITERATION_FILE.open(string_aux,ios::out);
+
+    if (!ITERATION_FILE){                 
+        cout<<"Error: File not created"<<endl;    
+    }else{
+        cout<<"FIle created"<<endl;              
+    }
+
+    for(int j=0; j<N; j++) ITERATION_FILE<<j*dx<<" "<<state_vector[j]<<endl;
+
+    ITERATION_FILE.close();   
+
+}
 
 void SecondDerivative(double* field, double* second_derivative_vector){
 
@@ -39,7 +62,6 @@ void SecondDerivative(double* field, double* second_derivative_vector){
 
   // calculate the second derivative with five points (-2,-1,0,1,2)
   // formula from https://web.media.mit.edu/~crtaylor/calculator.html
-
   for(int j=0; j<N; j++){
     if(j==0) second_derivative_vector[j] = (-1*left_ghost_cells_field[number_ghosts-2]+16*left_ghost_cells_field[number_ghosts-1]-30*field[j+0]+16*field[j+1]-1*field[j+2])/(12*1.0*dx*dx);
     else if(j==1) second_derivative_vector[j] = (-1*left_ghost_cells_field[number_ghosts+1-2]+16*field[j-1]-30*field[j+0]+16*field[j+1]-1*field[j+2])/(12*1.0*dx*dx);
@@ -47,6 +69,7 @@ void SecondDerivative(double* field, double* second_derivative_vector){
     else if(j==N-2) second_derivative_vector[j] = (-1*field[j-2]+16*field[j-1]-30*field[j+0]+16*field[j+1]-1*right_ghost_cells_field[0])/(12*1.0*dx*dx);
     else second_derivative_vector[j] = (-1*field[j-2]+16*field[j-1]-30*field[j+0]+16*field[j+1]-1*field[j+2])/(12*1.0*dx*dx);
   }
+
   // delete the ghost cells
   delete[] left_ghost_cells_field, right_ghost_cells_field;
 }
@@ -57,13 +80,12 @@ void RHS(double* state_vector, double* rhs_vector){
   double* pi = &state_vector[N];
   for(int j=0; j<N; j++) rhs_vector[j] = pi[j];
   SecondDerivative(phi, &rhs_vector[N]);
-  
-  delete[] phi, pi;
+
 }
 
 //4th order Runge-Kutta
 void RungeKutta(double* state_vector, void (*Func)(double*, double*)){
-  
+
   double* k1 = new double[2*N];
   double* k2 = new double[2*N];
   double* k3 = new double[2*N];
@@ -71,15 +93,19 @@ void RungeKutta(double* state_vector, void (*Func)(double*, double*)){
 
   double* vector_temp = new double[2*N];
 
-  RHS(state_vector, k1); // Calc k1
-  for(int j=0; j<2*N; j++) vector_temp[j] = state_vector[j]+dx*k1[j]/2;
-  RHS(vector_temp, k2); // Calc k2
-  for(int j=0; j<2*N; j++) vector_temp[j] = state_vector[j]+dx*k2[j]/2; 
-  RHS(vector_temp, k3); // Calc k3
-  for(int j=0; j<2*N; j++) vector_temp[j] = state_vector[j]+dx*k3[j];
-  RHS(vector_temp, k4);// Calc k4
+  //cout<<"a"<<endl;
+
+  Func(state_vector, k1); // Calc k1
+  for(int j=0; j<2*N; j++) vector_temp[j] = state_vector[j]+dt*k1[j]/2;
+  Func(vector_temp, k2); // Calc k2
+  for(int j=0; j<2*N; j++) vector_temp[j] = state_vector[j]+dt*k2[j]/2; 
+  Func(vector_temp, k3); // Calc k3
+  for(int j=0; j<2*N; j++) vector_temp[j] = state_vector[j]+dt*k3[j];
+  Func(vector_temp, k4);// Calc k4
+  for(int j=0; j<2*N; j++) state_vector[j] = state_vector[j]+(k1[j] + 2*k2[j] + 2*k3[j] +k4[j])*dt/6; // Overwrite the state vector
   
-  for(int j=0; j<2*N; j++) state_vector[j] = state_vector[j]+(k1[j] + 2*k2[j] + 2*k3[j] +k4[j]) / 6; // Overwrite the state vector
+
+  delete[] vector_temp,k1,k2,k3,k4;
 
 }
 
@@ -91,14 +117,17 @@ int main(){
   double* pi = &y[N];
 
   // impose initial values on phi and pi
-  double x_aux;
+  double x_aux; 
   for(int j=0; j<N; j++){
     x_aux = j*dx;
     phi[j] = sin(2*M_PI*x_aux);
-    pi[j] = 2*M_PI*cos(2*M_PI*x_aux);
+    pi[j] = 0;
   }
 
-  RungeKutta(y, RHS);
+  for(int i=0; i<number_iterations; i++){
+      RungeKutta(y, RHS);
+      Saving_Data_File(y,i);
+  }
 
   /* check if derivative works
   
