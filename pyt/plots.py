@@ -12,9 +12,9 @@ def animate_solution(i):
     axe.clear()
     axe.plot(x,y)
     axe.set_xlim([0,1])
-    axe.set_ylim([-1.1,1.1])
+    axe.set_ylim([0,2])
 
-ani = FuncAnimation(fig, func=animate_solution,frames=100,interval=5)
+ani = FuncAnimation(fig, func=animate_solution,frames=1000,interval=1, repeat=False)
 
 plt.show()
 

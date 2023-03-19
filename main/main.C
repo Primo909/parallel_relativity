@@ -15,14 +15,14 @@
 #include <iomanip> 
 #include <string>
 
-//#include "src/ header.h"
+#include "header.h"
 
 using namespace std;
 
-const double dx=1E-2; //Space discretization (uniform)
-const double dt=1E-3; //Time discret.
+const double dx=1E-3; //Space discretization (uniform)
+const double dt=1E-4; //Time discret.
 const double x_min=0, x_max=1; //Space interval 
-const double simul_time = 0.1; //Simulation time
+const double simul_time = 1; //Simulation time
 const int number_iterations = simul_time / dt; //Number of iterations
 const int N=(x_max - x_min) / dx; //Number of spatial cells
 const int number_ghosts = 3; // Number of ghost cells
@@ -109,24 +109,40 @@ void RungeKutta(double* state_vector, void (*Func)(double*, double*)){
 
 }
 
+
+double Gaussian(double x, double sigma, double x0){
+	return 1/(sigma*sqrt(2*M_PI)) * exp(-0.5 * (x-x0)*(x-x0)/sigma/sigma);
+}
+
+double Deviation(double result, double exact){
+	return (result-exact)/exact;
+}
+
 int main(){
 
   // define fields
   double* y = new double[2*N];
   double* phi = &y[0];
   double* pi = &y[N];
+  double* exact_phi = new double[N];
 
   // impose initial values on phi and pi
   double x_aux; 
   for(int j=0; j<N; j++){
     x_aux = j*dx;
-    phi[j] = sin(2*M_PI*x_aux);
-    pi[j] = 0;
+    //phi[j] = sin(2*M_PI*x_aux);
+    //pi[j] = sin(2*M_PI*x_aux);
+	//exact_phi[j] = (sin(2*M_PI*(x_aux-simul_time))+sin(2*M_PI*(x_aux+simul_time)))/2 + (1/4*M_PI) *  (cos(2*M_PI * (x_aux - simul_time)) - cos(2*M_PI*(x_aux-simul_time)));
+	double x0=0.5;
+	double sigma=5;
+	phi[j] = Gaussian(x_aux,sigma,x0);
+	pi[j] = 0;
+	exact_phi[j] = 0.5*(Gaussian(x_aux-simul_time,sigma,x0) + Gaussian(x_aux+simul_time,sigma,x0));
   }
 
   for(int i=0; i<number_iterations; i++){
       RungeKutta(y, RHS);
-      Saving_Data_File(y,i);
+      //Saving_Data_File(y,i);
   }
 
   /* check if derivative works
@@ -159,12 +175,12 @@ int main(){
   */
   
   // output something
-  //cout << "j" << "," << "phi" << "," << "pi" << endl;
-  //for(int j=0;j<N;j++){
-  //cout << j << "," << phi[j] << "," << pi[j] << endl;
-  //}
+  cout << "j" << setw(5) << "phi" << setw(5) << "Xphi" << endl;
+  for(int j=0;j<N;j++){
+  cout << j << "     " << setw(5) << phi[j] << "     " <<setw(5) << exact_phi[j] << setw(5) << "     " <<abs(phi[j]-exact_phi[j]) << "     " << Deviation(phi[j],exact_phi[j])<< endl;
+  }
   // delete pointer arrays
-  delete[] phi, pi, y;
+  delete[] y;
     
   return 0;
   
