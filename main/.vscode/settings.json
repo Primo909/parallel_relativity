@@ -1,0 +1,10 @@
+{
+    "files.associations": {
+        "state_vector_test.C": "cpp",
+        "main.C": "cpp",
+        "state_vector.C": "cpp",
+        "Var1D.C": "cpp",
+        "header.C": "cpp",
+        "file_configuration_test.C": "cpp"
+    }
+}
