@@ -133,8 +133,9 @@ void Convergence_Plot(double* state_vector, double* exact_phi, double dx_min, do
     dx_i = dx_min + idx*step;
     double x_aux; 
     double l1_norm = 0;
-
-    for(int j=0; j<N; j++){
+    int iN = (x_max - x_min)/dx_i; // number of cells, should be int 
+    cout << "number of cells: " << iN << endl;
+    for(int j=0; j < iN; j++){
       x_aux = j*dx_i;
       // for a sinusoidal
       phi[j] = sin(2*M_PI*x_aux);
@@ -142,12 +143,12 @@ void Convergence_Plot(double* state_vector, double* exact_phi, double dx_min, do
       exact_phi[j] = (sin(2*M_PI*(x_aux-simul_time)) + sin(2*M_PI*(x_aux+simul_time)))/2 + (1/4*M_PI) *  (cos(2*M_PI * (x_aux - simul_time)) - cos(2*M_PI*(x_aux-simul_time)));
 
      //cout << j << "     " << setw(5) << phi[j] << "     " <<setw(5) << exact_phi[j] << setw(5) << "     " << abs(phi[j]-exact_phi[j]) << "     " << Deviation(phi[j],exact_phi[j]) << endl;
-     l1_norm = l1_norm + abs(phi[j]-exact_phi[j]);
+     l1_norm = l1_norm + abs(phi[j] - exact_phi[j]);
     }
 
-    cout << "dx = " << dx_i << ", l1 = " << l1_norm << " (" << idx << "th iteration)" << endl;
+    cout << "dx = " << dx_i << ", l1 = " << l1_norm << " (" << idx << "th iteration) \n" << endl;
 
-    CONVERGENCE_FILE << dx_i << " "<< l1_norm << endl; 
+    CONVERGENCE_FILE << dx_i << " " << l1_norm << endl; 
   }
   CONVERGENCE_FILE.close();  
 }
@@ -186,7 +187,7 @@ int main(){
       //Saving_Data_File(y,i);
   }
 
-    Convergence_Plot(y, exact_phi, 1E-7, 1E-4, 1000);
+    Convergence_Plot(y, exact_phi, 1E-6, 1E-4, 500);
 
   /* check if derivative works
   
