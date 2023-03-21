@@ -21,12 +21,13 @@ string File_String= "numerical_phi_ite";
 
 void Saving_Data_File(double* state_vector, int iteration){
 
-    string string_aux=File_String+str(i);
+    string iteration_s = to_string(iteration);
+    string string_aux = File_String + iteration_s;
     
     fstream ITERATION_FILE;
     ITERATION_FILE.open(string_aux,ios::out);
 
-    for(int j=0; j<N; j++) ITERATION_FILE<<j*dx<<" "<<state_vector(j)<<endl;
+    for(int j=0; j<N; j++) ITERATION_FILE << j*dx << " " << state_vector[j] << endl;
 
     ITERATION_FILE.close();   
 
@@ -34,8 +35,5 @@ void Saving_Data_File(double* state_vector, int iteration){
 
 int main(){
 
-
-
     return 0;
-
 }

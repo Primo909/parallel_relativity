@@ -27,7 +27,7 @@ const int number_iterations = simul_time / dt; //Number of iterations
 const int N=(x_max - x_min) / dx; //Number of spatial cells
 const int number_ghosts = 3; // Number of ghost cells
 
-const string File_String= "./Data/numerical_phi_ite";
+const string File_String = "./Data/numerical_phi_ite";
 
 
 void Saving_Data_File(double* state_vector, int iteration){
@@ -40,13 +40,12 @@ void Saving_Data_File(double* state_vector, int iteration){
     if (!ITERATION_FILE){                 
         cout<<"Error: File not created"<<endl;    
     }else{
-        cout<<"FIle created"<<endl;              
+        cout<<"File created"<<endl;              
     }
 
     for(int j=0; j<N; j++) ITERATION_FILE<<j*dx<<" "<<state_vector[j]<<endl;
 
     ITERATION_FILE.close();   
-
 }
 
 void SecondDerivative(double* field, double* second_derivative_vector){
@@ -80,7 +79,6 @@ void RHS(double* state_vector, double* rhs_vector){
   double* pi = &state_vector[N];
   for(int j=0; j<N; j++) rhs_vector[j] = pi[j];
   SecondDerivative(phi, &rhs_vector[N]);
-
 }
 
 //4th order Runge-Kutta
@@ -103,12 +101,9 @@ void RungeKutta(double* state_vector, void (*Func)(double*, double*)){
   for(int j=0; j<2*N; j++) vector_temp[j] = state_vector[j]+dt*k3[j];
   Func(vector_temp, k4);// Calc k4
   for(int j=0; j<2*N; j++) state_vector[j] = state_vector[j]+(k1[j] + 2*k2[j] + 2*k3[j] +k4[j])*dt/6; // Overwrite the state vector
-  
 
   delete[] vector_temp,k1,k2,k3,k4;
-
 }
-
 
 double Gaussian(double x, double sigma, double x0){
 	return 1/(sigma*sqrt(2*M_PI)) * exp(-0.5 * (x-x0)*(x-x0)/sigma/sigma);
@@ -117,6 +112,46 @@ double Gaussian(double x, double sigma, double x0){
 double Deviation(double result, double exact){
 	return (result-exact)/exact;
 }
+
+void Convergence_Plot(double* state_vector, double* exact_phi, double dx_min, double dx_max, double num_it)
+{
+  ofstream CONVERGENCE_FILE("conv_file.dat");
+
+    if (!CONVERGENCE_FILE){                 
+        cout << "Error: File not created" << endl;    
+    }else{
+        cout << "File created" << endl;              
+    }
+
+  double* phi = &state_vector[0];
+  double* pi = &state_vector[N];
+  double step = (dx_max - dx_min)/num_it;
+  double dx_i;
+
+  for(int idx=0; idx < num_it; idx++)
+  {
+    dx_i = dx_min + idx*step;
+    double x_aux; 
+    double l1_norm = 0;
+
+    for(int j=0; j<N; j++){
+      x_aux = j*dx_i;
+      // for a sinusoidal
+      phi[j] = sin(2*M_PI*x_aux);
+      pi[j] = sin(2*M_PI*x_aux);
+      exact_phi[j] = (sin(2*M_PI*(x_aux-simul_time)) + sin(2*M_PI*(x_aux+simul_time)))/2 + (1/4*M_PI) *  (cos(2*M_PI * (x_aux - simul_time)) - cos(2*M_PI*(x_aux-simul_time)));
+
+     //cout << j << "     " << setw(5) << phi[j] << "     " <<setw(5) << exact_phi[j] << setw(5) << "     " << abs(phi[j]-exact_phi[j]) << "     " << Deviation(phi[j],exact_phi[j]) << endl;
+     l1_norm = l1_norm + abs(phi[j]-exact_phi[j]);
+    }
+
+    cout << "dx = " << dx_i << ", l1 = " << l1_norm << " (" << idx << "th iteration)" << endl;
+
+    CONVERGENCE_FILE << dx_i << " "<< l1_norm << endl; 
+  }
+  CONVERGENCE_FILE.close();  
+}
+
 
 int main(){
 
@@ -128,22 +163,30 @@ int main(){
 
   // impose initial values on phi and pi
   double x_aux; 
+  /*
   for(int j=0; j<N; j++){
     x_aux = j*dx;
-    //phi[j] = sin(2*M_PI*x_aux);
-    //pi[j] = sin(2*M_PI*x_aux);
-	//exact_phi[j] = (sin(2*M_PI*(x_aux-simul_time))+sin(2*M_PI*(x_aux+simul_time)))/2 + (1/4*M_PI) *  (cos(2*M_PI * (x_aux - simul_time)) - cos(2*M_PI*(x_aux-simul_time)));
-	double x0=0.5;
-	double sigma=5;
-	phi[j] = Gaussian(x_aux,sigma,x0);
-	pi[j] = 0;
-	exact_phi[j] = 0.5*(Gaussian(x_aux-simul_time,sigma,x0) + Gaussian(x_aux+simul_time,sigma,x0));
-  }
+        // for a sinusoidal
+    phi[j] = sin(2*M_PI*x_aux);
+    pi[j] = sin(2*M_PI*x_aux);
+	  exact_phi[j] = (sin(2*M_PI*(x_aux-simul_time))+sin(2*M_PI*(x_aux+simul_time)))/2 + (1/4*M_PI) *  (cos(2*M_PI * (x_aux - simul_time)) - cos(2*M_PI*(x_aux-simul_time)));
+  */
+
+
+        // for a Gaussian
+  //double x0=0.5;
+	//double sigma=5;
+	//phi[j] = Gaussian(x_aux,sigma,x0);
+	//pi[j] = 0;
+	//exact_phi[j] = 0.5*(Gaussian(x_aux-simul_time,sigma,x0) + Gaussian(x_aux+simul_time,sigma,x0));
+  //}
 
   for(int i=0; i<number_iterations; i++){
       RungeKutta(y, RHS);
       //Saving_Data_File(y,i);
   }
+
+    Convergence_Plot(y, exact_phi, 1E-7, 1E-4, 1000);
 
   /* check if derivative works
   
@@ -175,10 +218,10 @@ int main(){
   */
   
   // output something
-  cout << "j" << setw(5) << "phi" << setw(5) << "Xphi" << endl;
-  for(int j=0;j<N;j++){
-  cout << j << "     " << setw(5) << phi[j] << "     " <<setw(5) << exact_phi[j] << setw(5) << "     " <<abs(phi[j]-exact_phi[j]) << "     " << Deviation(phi[j],exact_phi[j])<< endl;
-  }
+  //cout << "j" << setw(5) << "phi" << setw(5) << "Xphi" << endl;
+  //for(int j=0;j<N;j++){
+  //cout << j << "     " << setw(5) << phi[j] << "     " <<setw(5) << exact_phi[j] << setw(5) << "     " <<abs(phi[j]-exact_phi[j]) << "     " << Deviation(phi[j],exact_phi[j])<< endl;
+  //}
   // delete pointer arrays
   delete[] y;
     
