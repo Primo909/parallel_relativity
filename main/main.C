@@ -20,13 +20,13 @@
 using namespace std;
 
 const double dx=1E-3; //Space discretization (uniform)
-const double dt=1E-4; //Time discret.
+const double dt=5E-5; //Time discret.
 const double x_min=0, x_max=1; //Space interval 
 const double simul_time = 1; //Simulation time
 const int number_iterations = simul_time / dt; //Number of iterations
 const int N=(x_max - x_min) / dx; //Number of spatial cells
 const int number_ghosts = 3; // Number of ghost cells
-
+ 
 const string File_String = "./Data/numerical_phi_ite";
 
 
@@ -133,8 +133,10 @@ void Convergence_Plot(double* state_vector, double* exact_phi, double dx_min, do
     dx_i = dx_min + idx*step;
     double x_aux; 
     double l1_norm = 0;
+    double l1_norm_cell = 0;
     int iN = (x_max - x_min)/dx_i; // number of cells, should be int 
     cout << "number of cells: " << iN << endl;
+
     for(int j=0; j < iN; j++){
       x_aux = j*dx_i;
       // for a sinusoidal
@@ -144,11 +146,12 @@ void Convergence_Plot(double* state_vector, double* exact_phi, double dx_min, do
 
      //cout << j << "     " << setw(5) << phi[j] << "     " <<setw(5) << exact_phi[j] << setw(5) << "     " << abs(phi[j]-exact_phi[j]) << "     " << Deviation(phi[j],exact_phi[j]) << endl;
      l1_norm = l1_norm + abs(phi[j] - exact_phi[j]);
+     l1_norm_cell = l1_norm/double(iN);
     }
 
-    cout << "dx = " << dx_i << ", l1 = " << l1_norm << " (" << idx << "th iteration) \n" << endl;
+    cout << "dx = " << dx_i << ", l1 = " << double(l1_norm_cell) << " (" << idx << "th iteration) \n" << endl;
 
-    CONVERGENCE_FILE << dx_i << " " << l1_norm << endl; 
+    CONVERGENCE_FILE << dx_i << " " << l1_norm_cell << endl; 
   }
   CONVERGENCE_FILE.close();  
 }
