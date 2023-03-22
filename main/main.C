@@ -14,42 +14,44 @@
 #include <vector>
 #include <iomanip> 
 #include <string>
+#include <chrono>
 
 #include "header.h"
 
 using namespace std;
+using namespace std::chrono;
 
-const double dx=1E-3; //Space discretization (uniform)
-const double dt=5E-5; //Time discret.
+double dx=1E-3; //Space discretization (uniform)
+const double dt=1E-4; //Time discret.
 const double x_min=0, x_max=1; //Space interval 
 const double simul_time = 1; //Simulation time
 const int number_iterations = simul_time / dt; //Number of iterations
-const int N=(x_max - x_min) / dx; //Number of spatial cells
+int N=(x_max - x_min) / dx; //Number of spatial cells
 const int number_ghosts = 3; // Number of ghost cells
  
 const string File_String = "./Data/numerical_phi_ite";
-
+const string Simulation_Start_String= "Simulation has started";
+const string Simulation_End_String= "Simulation has ended";
 
 void Saving_Data_File(double* state_vector, int iteration){
 
-    string string_aux=File_String+to_string(iteration+1)+".dat";
-    
-    fstream ITERATION_FILE;
-    ITERATION_FILE.open(string_aux,ios::out);
+  string string_aux=File_String+to_string(iteration+1)+".dat";
+  
+  fstream ITERATION_FILE;
+  ITERATION_FILE.open(string_aux,ios::out);
 
-    if (!ITERATION_FILE){                 
-        cout<<"Error: File not created"<<endl;    
-    }else{
-        cout<<"File created"<<endl;              
-    }
+  if (!ITERATION_FILE){                 
+      cout<<"Error: File not created"<<endl;    
+  }else{
+      cout<<"File created"<<endl;              
+  }
 
-    for(int j=0; j<N; j++) ITERATION_FILE<<j*dx<<" "<<state_vector[j]<<endl;
+  for(int j=0; j<N; j++) ITERATION_FILE<<j*dx<<" "<<state_vector[j]<<endl;
 
-    ITERATION_FILE.close();   
+  ITERATION_FILE.close();   
 }
 
 void SecondDerivative(double* field, double* second_derivative_vector){
-
   // creates ghost cells
   double* right_ghost_cells_field = new double[number_ghosts];
   double* left_ghost_cells_field = new double[number_ghosts];
@@ -58,7 +60,6 @@ void SecondDerivative(double* field, double* second_derivative_vector){
     right_ghost_cells_field[j] = field[j];
     left_ghost_cells_field[number_ghosts-1-j] = field[N-1-j];
   }
-
   // calculate the second derivative with five points (-2,-1,0,1,2)
   // formula from https://web.media.mit.edu/~crtaylor/calculator.html
   for(int j=0; j<N; j++){
@@ -91,8 +92,6 @@ void RungeKutta(double* state_vector, void (*Func)(double*, double*)){
 
   double* vector_temp = new double[2*N];
 
-  //cout<<"a"<<endl;
-
   Func(state_vector, k1); // Calc k1
   for(int j=0; j<2*N; j++) vector_temp[j] = state_vector[j]+dt*k1[j]/2;
   Func(vector_temp, k2); // Calc k2
@@ -113,51 +112,63 @@ double Deviation(double result, double exact){
 	return (result-exact)/exact;
 }
 
-void Convergence_Plot(double* state_vector, double* exact_phi, double dx_min, double dx_max, double num_it)
+void Convergence_Plot(double dx_min, double dx_max, int num_dx)
 {
   ofstream CONVERGENCE_FILE("conv_file.dat");
 
-    if (!CONVERGENCE_FILE){                 
-        cout << "Error: File not created" << endl;    
-    }else{
-        cout << "File created" << endl;              
-    }
+  if (!CONVERGENCE_FILE){                 
+      cout << "Error: File not created" << endl;    
+  }else{
+      cout << "File created" << endl;              
+  }
 
-  double* phi = &state_vector[0];
-  double* pi = &state_vector[N];
-  double step = (dx_max - dx_min)/num_it;
-  double dx_i;
+  double step = (dx_max - dx_min)/num_dx;
+  
+  for(int idx=0; idx < num_dx; idx++){
 
-  for(int idx=0; idx < num_it; idx++)
-  {
-    dx_i = dx_min + idx*step;
-    double x_aux; 
+    dx = dx_min + idx*step;
+    N = (x_max - x_min)/dx; // number of cells, should be int 
+    double* y= new double[2*N];
+    double* phi = &y[0];
+    double* pi = &y[N];
+    double* exact_phi= new double[N];
+
     double l1_norm = 0;
-    double l1_norm_cell = 0;
-    int iN = (x_max - x_min)/dx_i; // number of cells, should be int 
-    cout << "number of cells: " << iN << endl;
 
-    for(int j=0; j < iN; j++){
-      x_aux = j*dx_i;
-      // for a sinusoidal
+    double x_aux; 
+    cout << "number of cells: " << N << endl;
+
+    //Initial Conditions (for a sinusoidal)
+    for(int j=0; j < N; j++){
+      x_aux = j*dx;
       phi[j] = sin(2*M_PI*x_aux);
       pi[j] = sin(2*M_PI*x_aux);
       exact_phi[j] = (sin(2*M_PI*(x_aux-simul_time)) + sin(2*M_PI*(x_aux+simul_time)))/2 + (1/4*M_PI) *  (cos(2*M_PI * (x_aux - simul_time)) - cos(2*M_PI*(x_aux-simul_time)));
-
-     //cout << j << "     " << setw(5) << phi[j] << "     " <<setw(5) << exact_phi[j] << setw(5) << "     " << abs(phi[j]-exact_phi[j]) << "     " << Deviation(phi[j],exact_phi[j]) << endl;
-     l1_norm = l1_norm + abs(phi[j] - exact_phi[j]);
-     l1_norm_cell = l1_norm/double(iN);
     }
 
-    cout << "dx = " << dx_i << ", l1 = " << double(l1_norm_cell) << " (" << idx << "th iteration) \n" << endl;
+    for(int i=0; i<number_iterations; i++){
+      RungeKutta(y, RHS);
+    }
 
-    CONVERGENCE_FILE << dx_i << " " << l1_norm_cell << endl; 
+    for(int j=0; j<N; j++) l1_norm=l1_norm + abs(phi[j] - exact_phi[j]);
+    double l1_norm_log=log10(l1_norm);
+
+    delete[] y;
+
+    cout << "dx = " << dx << ", l1 = " << double(l1_norm_log) << " (" << idx << "th iteration) \n" << endl;
+    CONVERGENCE_FILE << dx << " " << l1_norm_log << endl; 
+
   }
+  
   CONVERGENCE_FILE.close();  
 }
+  
 
 
 int main(){
+
+  auto start = high_resolution_clock::now(); //Counting time
+  cout<<Simulation_Start_String<<endl;
 
   // define fields
   double* y = new double[2*N];
@@ -168,16 +179,15 @@ int main(){
   // impose initial values on phi and pi
   double x_aux; 
   /*
+  // for a sinusoidal
   for(int j=0; j<N; j++){
     x_aux = j*dx;
-        // for a sinusoidal
     phi[j] = sin(2*M_PI*x_aux);
     pi[j] = sin(2*M_PI*x_aux);
 	  exact_phi[j] = (sin(2*M_PI*(x_aux-simul_time))+sin(2*M_PI*(x_aux+simul_time)))/2 + (1/4*M_PI) *  (cos(2*M_PI * (x_aux - simul_time)) - cos(2*M_PI*(x_aux-simul_time)));
   */
 
-
-        // for a Gaussian
+  // for a Gaussian
   //double x0=0.5;
 	//double sigma=5;
 	//phi[j] = Gaussian(x_aux,sigma,x0);
@@ -190,37 +200,10 @@ int main(){
       //Saving_Data_File(y,i);
   }
 
-    Convergence_Plot(y, exact_phi, 1E-6, 1E-4, 500);
-
-  /* check if derivative works
-  
-  double* second_phi = new double[N];
-  SecondDerivative(phi, second_phi);
-  double* rhs_vector = new double[2*N];
-  rhs(y, rhs_vector);
-
-  cout << setprecision(4) << "j" << setw(12) << "phi" << setw(12) << "phi_xx" << endl;
-  for(int j=0;j<N;j++){
-  cout << setprecision(4) << j << setw(12) << phi[j] << setw(12) << -1*second_phi[j]/(4*M_PI*M_PI) << setw(12) << phi[j]+1*second_phi[j]/(4*M_PI*M_PI)<< endl;
-  }
-  */
+  Convergence_Plot(1E-4, 1E-2, 10);
 
 
-  /*
-  // check for f flip
-  cout << setprecision(2) << "j" << setw(12) << "y" << setw(12) << "f" << endl;
-  for(int j=0;j<2*N;j++){
-  cout << setprecision(2) << j << setw(12) << y[j] << setw(12) << rhs_vector[j] << endl;
-  }
-  */
-  // Runge kutta
-  /*
-  double* k1 = new double[2*N];
-  double* k2 = new double[2*N];
-  double* k3 = new double[2*N];
-  double* k4 = new double[2*N];
-  */
-  
+
   // output something
   //cout << "j" << setw(5) << "phi" << setw(5) << "Xphi" << endl;
   //for(int j=0;j<N;j++){
@@ -228,6 +211,11 @@ int main(){
   //}
   // delete pointer arrays
   delete[] y;
+
+  auto stop = high_resolution_clock::now();
+	auto duration = duration_cast<microseconds>(stop - start);
+	cout<<endl;
+  cout<<Simulation_End_String<<endl;
     
   return 0;
   
