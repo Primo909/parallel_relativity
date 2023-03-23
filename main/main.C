@@ -17,21 +17,19 @@
 #include <chrono>
 
 #include "header.h"
+#include "WaveEquationSolver1D.h"
 
 using namespace std;
 using namespace std::chrono;
 
-double dx=1E-3; //Space discretization (uniform)
-const double dt=1E-4; //Time discret.
-const double x_min=0, x_max=1; //Space interval 
+
+double dx=1E-2; //Space discretization (uniform)
+const double dt=1E-3; //Time discret.
+const double x_min=-1, x_max=1; //Space interval 
 const double simul_time = 1; //Simulation time
 const int number_iterations = simul_time / dt; //Number of iterations
 int N=(x_max - x_min) / dx; //Number of spatial cells
 const int number_ghosts = 3; // Number of ghost cells
- 
-const string File_String = "./Data/numerical_phi_ite";
-const string Simulation_Start_String= "Simulation has started";
-const string Simulation_End_String= "Simulation has ended";
 
 void Saving_Data_File(double* state_vector, int iteration){
 
@@ -104,9 +102,7 @@ void RungeKutta(double* state_vector, void (*Func)(double*, double*)){
   delete[] vector_temp,k1,k2,k3,k4;
 }
 
-double Gaussian(double x, double sigma, double x0){
-	return 1/(sigma*sqrt(2*M_PI)) * exp(-0.5 * (x-x0)*(x-x0)/sigma/sigma);
-}
+
 
 double Deviation(double result, double exact){
 	return (result-exact)/exact;
@@ -167,7 +163,7 @@ void Convergence_Plot(double dx_min, double dx_max, int num_dx)
 
 int main(){
 
-  auto start = high_resolution_clock::now(); //Counting time
+  /*auto start = high_resolution_clock::now(); //Counting time
   cout<<Simulation_Start_String<<endl;
 
   // define fields
@@ -195,12 +191,12 @@ int main(){
 	//exact_phi[j] = 0.5*(Gaussian(x_aux-simul_time,sigma,x0) + Gaussian(x_aux+simul_time,sigma,x0));
   //}
 
-  for(int i=0; i<number_iterations; i++){
+  /*for(int i=0; i<number_iterations; i++){
       RungeKutta(y, RHS);
       //Saving_Data_File(y,i);
   }
 
-  Convergence_Plot(1E-4, 1E-2, 10);
+  Convergence_Plot(1E-4, 1E-2, 10);*/
 
 
 
@@ -210,13 +206,44 @@ int main(){
   //cout << j << "     " << setw(5) << phi[j] << "     " <<setw(5) << exact_phi[j] << setw(5) << "     " <<abs(phi[j]-exact_phi[j]) << "     " << Deviation(phi[j],exact_phi[j])<< endl;
   //}
   // delete pointer arrays
-  delete[] y;
+  /*delete[] y;
 
   auto stop = high_resolution_clock::now();
 	auto duration = duration_cast<microseconds>(stop - start);
 	cout<<endl;
   cout<<Simulation_End_String<<endl;
-    
+  */
+
+
+  // define fields
+  double* y = new double[2*N];
+  double* phi = &y[0];
+  double* pi = &y[N];
+
+  // impose initial values on phi and pi
+  double x_aux; 
+  
+  // for a sinusoidal
+  /*for(int j=0; j<N; j++){
+    x_aux = x_min+j*dx;
+    phi[j] = sin(2*M_PI*x_aux);
+    pi[j] = sin(2*M_PI*x_aux);
+  }*/
+  // for a Gaussian
+  double x0=0;
+	double sigma=0.5;
+  for(int j=0; j<N; j++){
+    x_aux = x_min+j*dx;
+
+    phi[j] = Gaussian(x_aux,sigma,x0);
+    pi[j] = 0;
+  }
+	//exact_phi[j] = 0.5*(Gaussian(x_aux-simul_time,sigma,x0) + Gaussian(x_aux+simul_time,sigma,x0));
+
+  WaveEquationSolver1D WaveEquation;
+  WaveEquation.Solve(x_min,x_max,dx,y,dt,simul_time);
+  WaveEquation.PointConvergenceTest();
+
   return 0;
   
 }
