@@ -110,19 +110,27 @@ void WaveEquationSolver1D::Solve(double xmin, double xmax, double dx, double* In
 
 }
 
-void WaveEquationSolver1D::PointConvergenceTest(){
+void WaveEquationSolver1D::PointConvergenceTest(double (*func1)(double), double (*func2)(double), string filename){
 
     auto start = high_resolution_clock::now(); //Counting time
     cout<<Simulation_Start_String<<endl;
+  
+    fstream ITERATION_FILE;
+    ITERATION_FILE.open(filename,ios::out);
 
-    double T=5;
+    if (!ITERATION_FILE){
+		cout<<"Error: File not created"<<endl;    
+  }
+
+	// T = simulation time
+    double T=0.5;
     double dt=1E-4;
     int number_iterations= T/dt;
 
     double x_min=-1;
     double x_max=1;
 
-    double dx_low=4E-4; //lowest resolution
+    double dx_low=5E-3; //lowest resolution
     int N_low=(x_max-x_min)/dx_low;
     double dx_mid=dx_low/2; //middle resolution
     int N_mid=(x_max-x_min)/dx_mid;
@@ -131,7 +139,12 @@ void WaveEquationSolver1D::PointConvergenceTest(){
 
     double* y_low= new double[2*N_low];
     double* y_mid= new double[2*N_mid];
-    double* y_high= new double[2*N_high];
+    double* y_high = new double[2*N_high];
+
+
+	double* phi_ratio = new double[N_low];
+	double* phi_low_mid = new double[N_low];
+	double* phi_mid_high = new double[N_low];
 
     double sigma=1;
     double x_aux;
@@ -139,29 +152,38 @@ void WaveEquationSolver1D::PointConvergenceTest(){
 
     for(int j=0; j<N_low; j++){ 
         x_aux=x_min+j*dx_low;
-        y_low[j]=Gaussian(x_aux,sigma,x0);
-        y_low[j+N_low]=0;
+        y_low[j]=func1(x_aux);
+        y_low[j+N_low]=func2(x_aux);
     }
     for(int j=0; j<N_mid; j++){ 
         x_aux=x_min+j*dx_mid;
-        y_mid[j]=Gaussian(x_aux,sigma,x0);
-        y_mid[j+N_mid]=0;
+        y_mid[j]=func1(x_aux);
+        y_mid[j+N_mid]=func2(x_aux);
     }    
     for(int j=0; j<N_high; j++){ 
         x_aux=x_min+j*dx_high;
-        y_high[j]=Gaussian(x_aux,sigma,x0);
-        y_high[j+N_high]=0;
+        y_high[j]=func1(x_aux);
+        y_high[j+N_high]=func2(x_aux);
     }
 
     for(int i=0; i<number_iterations; i++){
         RuggeKutta(N_low,dx_low,dt,y_low);
-        //RuggeKutta(N_mid,dx_mid,dt,y_mid);
-        //RuggeKutta(N_high,dx_high,dt,y_high);
+        RuggeKutta(N_mid,dx_mid,dt,y_mid);
+        RuggeKutta(N_high,dx_high,dt,y_high);
     }
+
+	for(int i=0; i<N_low; i++){
+		phi_low_mid[i] = y_low[i] - y_mid[2*i];
+		phi_mid_high[i] = y_mid[2*i] - y_high[4*i];
+		phi_ratio[i] = phi_low_mid[i] / phi_mid_high[i];
+		//cout << "     " << phi_low_mid[i] << "     " << phi_mid_high[i] << "    " << phi_ratio[i] << endl;
+		ITERATION_FILE << "     " << phi_low_mid[i] << "     " << phi_mid_high[i] << "    " << phi_ratio[i] << endl;
+	}
 
     auto stop = high_resolution_clock::now();
 	auto duration = duration_cast<microseconds>(stop - start);
 	cout<<endl;
     cout<<Simulation_End_String<<":  "<<duration.count()/1E6<<" s"<<endl;
 
+  ITERATION_FILE.close();   
 }

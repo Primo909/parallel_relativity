@@ -25,7 +25,7 @@ class WaveEquationSolver1D{
 
     WaveEquationSolver1D(); //constructor
     void Solve(double, double, double, double*, double, double); //solver
-    void PointConvergenceTest(); //Tests the convergence of the used Fin. Diff. Method
+	void PointConvergenceTest(double (*func1)(double), double (*func2)(double), string);//Tests the convergence of the used Fin. Diff. Method
 
     private:
 
