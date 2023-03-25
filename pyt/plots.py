@@ -20,7 +20,7 @@ def animate_solution(i):
     plt.plot(x,y,color="green")
     plt.title("T= "+ str(round(dt*i,2)))
 
-ani = FuncAnimation(fig, func=animate_solution,frames=3000, interval=1, repeat=False)
+ani = FuncAnimation(fig, func=animate_solution,frames=2000, interval=1, repeat=False)
 ani.save('solution.gif', writer='Pillow', fps=100)
 
 
