@@ -8,6 +8,9 @@
         "iomanip": "cpp",
         "iostream": "cpp",
         "state_vector_test.C": "cpp",
-        "state_vector.C": "cpp"
+        "state_vector.C": "cpp",
+        "WaveEquationSolver1D.C": "cpp",
+        "ostream": "cpp",
+        "NonLinearWaveEquationSolver1D.C": "cpp"
     }
 }

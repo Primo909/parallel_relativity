@@ -5,7 +5,7 @@
 //Francisco Valério Raposo ist196531
 //Kevin Steiner ist1107611
 
-//One dimensional standard wave equation
+//Wave equation
 
 #include <cstdio>
 #include <iostream>
@@ -18,6 +18,7 @@
 
 #include "header.h"
 #include "WaveEquationSolver1D.h"
+#include "NonLinearWaveEquationSolver1D.h"
 
 using namespace std;
 using namespace std::chrono;
@@ -26,7 +27,7 @@ using namespace std::chrono;
 double dx=1E-2; //Space discretization (uniform)
 const double dt=1E-3; //Time discret.
 const double x_min=-1, x_max=1; //Space interval 
-const double simul_time = 1; //Simulation time
+const double simul_time = 3; //Simulation time
 const int number_iterations = simul_time / dt; //Number of iterations
 int N=(x_max - x_min) / dx; //Number of spatial cells
 const int number_ghosts = 3; // Number of ghost cells
@@ -69,16 +70,15 @@ int main(){
   for(int j=0; j<N; j++){
     x_aux = x_min+j*dx;
 
-    phi[j] = Gaussian(x_aux,sigma,x0);
+    phi[j] = GaussianFixed(x_aux);
     pi[j] = 0;
   }
   WaveEquationSolver1D WaveEquation;
-  //WaveEquation.Solve(x_min,x_max,dx,y,dt,simul_time);
+  WaveEquation.Solve(x_min,x_max,dx,y,dt,simul_time,true);
 
-  WaveEquation.PointConvergenceTest(Sin, Zero, "./Data/sin_zero.dat");
-  WaveEquation.PointConvergenceTest(GaussianFixed, Zero, "./Data/gauss_zero.dat");
-
-
+  //WaveEquation.PointConvergenceTest(Sin, Zero, "./Data/sin_zero.dat");
+  //WaveEquation.PointConvergenceTest(GaussianFixed, Zero, "./Data/gauss_zero.dat");
+  //WaveEquation.NormConvergenceTest(GaussianFixed, Zero, "./Data/norm_conv_gauss_zero.dat");
 
   return 0;
   
