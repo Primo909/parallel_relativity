@@ -23,7 +23,6 @@
 using namespace std;
 using namespace std::chrono;
 
-
 double dx=1E-2; //Space discretization (uniform)
 const double dt=1E-3; //Time discret.
 const double x_min=-1, x_max=1; //Space interval 
@@ -34,7 +33,6 @@ const int number_ghosts = 3; // Number of ghost cells
 
 double sigma = 0.1;
 double x0 = 0;
-
 
 double Sin(double x){
   return sin(2*M_PI*x);

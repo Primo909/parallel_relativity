@@ -7,8 +7,8 @@
 WaveEquationSolver1D::WaveEquationSolver1D(double XMIN, double XMAX, double(*FUNC1)(double ), double(*FUNC2)(double)){
     x_min=XMIN;
     x_max=XMAX;
-    func1=FUNC1;
-    func2=FUNC2;
+    Initial_Condition_Phi=FUNC1;
+    Initial_Condition_Pi=FUNC2;
 }
 
 void WaveEquationSolver1D::Info_Conv_Test(double dx, string file_name){
@@ -36,8 +36,8 @@ void WaveEquationSolver1D::Saving_Data_File(int N, double* state_vector, double*
 }
 
 void WaveEquationSolver1D::SetInitialConditions(int N, double *y, double* axis){
-    for(int j=0; j<N; j++) y[j]=func1(axis[j]);
-    for(int j=N; j<2*N; j++) y[j]=func2(axis[j]);
+    for(int j=0; j<N; j++) y[j]=Initial_Condition_Phi(axis[j]);
+    for(int j=N; j<2*N; j++) y[j]=Initial_Condition_Pi(axis[j]);
 }
 
 void WaveEquationSolver1D::SecondDerivative(int N, double dx, double* field, double* second_derivative_vector){
@@ -161,18 +161,18 @@ void WaveEquationSolver1D::PointConvergenceTest(string filename){
 
     for(int j=0; j<N_low; j++){ 
         x_aux=x_min+j*dx_low;
-        y_low[j]=func1(x_aux);
-        y_low[j+N_low]=func2(x_aux);
+        y_low[j]=Initial_Condition_Phi(x_aux);
+        y_low[j+N_low]=Initial_Condition_Pi(x_aux);
     }
     for(int j=0; j<N_mid; j++){ 
         x_aux=x_min+j*dx_mid;
-        y_mid[j]=func1(x_aux);
-        y_mid[j+N_mid]=func2(x_aux);
+        y_mid[j]=Initial_Condition_Phi(x_aux);
+        y_mid[j+N_mid]=Initial_Condition_Pi(x_aux);
     }    
     for(int j=0; j<N_high; j++){ 
         x_aux=x_min+j*dx_high;
-        y_high[j]=func1(x_aux);
-        y_high[j+N_high]=func2(x_aux);
+        y_high[j]=Initial_Condition_Phi(x_aux);
+        y_high[j+N_high]=Initial_Condition_Pi(x_aux);
     }
 
     for(int i=0; i<number_iterations; i++){
@@ -231,18 +231,18 @@ void WaveEquationSolver1D::NormConvergenceTest(string filename){
 
     for(int j=0; j<N_low; j++){ 
         x_aux=x_min+j*dx_low;
-        y_low[j]=func1(x_aux);
-        y_low[j+N_low]=func2(x_aux);
+        y_low[j]=Initial_Condition_Phi(x_aux);
+        y_low[j+N_low]=Initial_Condition_Pi(x_aux);
     }
     for(int j=0; j<N_mid; j++){ 
         x_aux=x_min+j*dx_mid;
-        y_mid[j]=func1(x_aux);
-        y_mid[j+N_mid]=func2(x_aux);
+        y_mid[j]=Initial_Condition_Phi(x_aux);
+        y_mid[j+N_mid]=Initial_Condition_Pi(x_aux);
     }    
     for(int j=0; j<N_high; j++){ 
         x_aux=x_min+j*dx_high;
-        y_high[j]=func1(x_aux);
-        y_high[j+N_high]=func2(x_aux);
+        y_high[j]=Initial_Condition_Phi(x_aux);
+        y_high[j+N_high]=Initial_Condition_Pi(x_aux);
     }
     
     double phi_low_mid, phi_mid_high, sum_low_mid=0, sum_mid_high=0;

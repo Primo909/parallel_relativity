@@ -30,8 +30,8 @@ class WaveEquationSolver1D{
 
     double x_max;
     double x_min;
-    double (*func1) (double);
-    double (*func2) (double);
+    double (*Initial_Condition_Phi) (double);
+    double (*Initial_Condition_Pi) (double);
 
     void SetInitialConditions(int, double*, double*);
     void FirstDerivative();
