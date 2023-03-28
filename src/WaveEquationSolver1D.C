@@ -4,7 +4,12 @@
 	return 1/(sigma*sqrt(2*M_PI)) * exp(-0.5 * (x-x0)*(x-x0)/sigma/sigma);
 }*/
 
-WaveEquationSolver1D::WaveEquationSolver1D(){}
+WaveEquationSolver1D::WaveEquationSolver1D(double XMIN, double XMAX, double(*FUNC1)(double ), double(*FUNC2)(double)){
+    x_min=XMIN;
+    x_max=XMAX;
+    func1=FUNC1;
+    func2=FUNC2;
+}
 
 void WaveEquationSolver1D::Info_Conv_Test(double dx, string file_name){
     cout<<endl;
@@ -30,8 +35,9 @@ void WaveEquationSolver1D::Saving_Data_File(int N, double* state_vector, double*
 
 }
 
-void WaveEquationSolver1D::SetInitialConditions(int N, double *y, double* InitialState){
-    for(int j=0; j<2*N; j++) y[j]=InitialState[j];
+void WaveEquationSolver1D::SetInitialConditions(int N, double *y, double* axis){
+    for(int j=0; j<N; j++) y[j]=func1(axis[j]);
+    for(int j=N; j<2*N; j++) y[j]=func2(axis[j]);
 }
 
 void WaveEquationSolver1D::SecondDerivative(int N, double dx, double* field, double* second_derivative_vector){
@@ -86,12 +92,12 @@ void WaveEquationSolver1D::RuggeKutta(int N, double dx, double dt, double* state
     delete[] vector_temp,k1,k2,k3,k4;
 }
 
-void WaveEquationSolver1D::Solve(double xmin, double xmax, double dx, double* InitialState, double dt=1E-3, double simul_time=2, bool file=false){
+void WaveEquationSolver1D::Solve(double dx, double dt=1E-3, double simul_time=2, string file_name=""){
 
     auto start = high_resolution_clock::now(); //Counting time
     cout<<Simulation_Start_String<<endl;
 
-    int N=(xmax-xmin)/dx;
+    int N=(x_max-x_min)/dx;
     int number_iterations = simul_time / dt;
 
     double* y= new double[2*N];
@@ -99,13 +105,13 @@ void WaveEquationSolver1D::Solve(double xmin, double xmax, double dx, double* In
     double *pi= &y[N];
 
     double* axis= new double[N];
-    for(int j=0; j<N; j++) axis[j]=xmin+j*dx;
+    for(int j=0; j<N; j++) axis[j]=x_min+j*dx;
 
-    SetInitialConditions(N, y, InitialState);
+    SetInitialConditions(N, y, axis);
 
     for(int i=0; i<number_iterations; i++){
         RuggeKutta(N,dx,dt,y);
-        if(file==1) Saving_Data_File(N,y,axis,i);
+        if(file_name!="") Saving_Data_File(N,y,axis,i);
     }
 
     auto stop = high_resolution_clock::now();
@@ -117,7 +123,7 @@ void WaveEquationSolver1D::Solve(double xmin, double xmax, double dx, double* In
 
 }
 
-void WaveEquationSolver1D::PointConvergenceTest(double (*func1)(double), double (*func2)(double), string filename){
+void WaveEquationSolver1D::PointConvergenceTest(string filename){
 
     auto start = high_resolution_clock::now(); //Counting time
     cout<<Simulation_Start_String<<endl;
@@ -133,9 +139,6 @@ void WaveEquationSolver1D::PointConvergenceTest(double (*func1)(double), double 
     double T=1.2;
     double dt=1E-4;
     int number_iterations= T/dt;
-
-    double x_min=-1;
-    double x_max=1;
 
     double dx_low=5E-3; //lowest resolution
     int N_low=(x_max-x_min)/dx_low;
@@ -197,7 +200,7 @@ void WaveEquationSolver1D::PointConvergenceTest(double (*func1)(double), double 
 
 }
 
-void WaveEquationSolver1D::NormConvergenceTest(double (*func1)(double), double (*func2)(double), string filename){
+void WaveEquationSolver1D::NormConvergenceTest(string filename){
 
     auto start = high_resolution_clock::now(); //Counting time
     fstream NORM_CONV_FILE;
@@ -210,9 +213,6 @@ void WaveEquationSolver1D::NormConvergenceTest(double (*func1)(double), double (
     double T=1.2;
     double dt=1E-4;
     int number_iterations= T/dt;
-
-    double x_min=-1;
-    double x_max=1;
 
     double dx_low=5E-3; //lowest resolution
     int N_low=(x_max-x_min)/dx_low;

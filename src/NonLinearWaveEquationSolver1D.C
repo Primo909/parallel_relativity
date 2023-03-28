@@ -60,7 +60,7 @@ void NonLinearWaveEquationSolver1D::SecondDerivative(int N, double dx, double* f
 void NonLinearWaveEquationSolver1D::RHS(int N, double dx, double* state_vector, double* rhs_vector){
     double* phi = &state_vector[0];
     double* pi = &state_vector[N];
-    for(int j=0; j<N; j++) rhs_vector[j] = pi[j]*pi[j];
+    for(int j=0; j<N; j++) rhs_vector[j] = -pi[j]*pi[j];
     SecondDerivative(N, dx, phi, &rhs_vector[N]);
     //for(int j=0; j<N; j++) cout<<phi[j]<<" "<<rhs_vector[j]<<endl;
     //for(int j=0; j<N; j++) cout<<pi[j]<<" "<<rhs_vector[N+j]/(2*M_PI*2*M_PI)<<endl;

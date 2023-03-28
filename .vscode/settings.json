@@ -11,6 +11,8 @@
         "state_vector.C": "cpp",
         "WaveEquationSolver1D.C": "cpp",
         "ostream": "cpp",
-        "NonLinearWaveEquationSolver1D.C": "cpp"
+        "NonLinearWaveEquationSolver1D.C": "cpp",
+        "fstream": "cpp",
+        "chrono": "cpp"
     }
 }

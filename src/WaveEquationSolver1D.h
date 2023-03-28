@@ -10,14 +10,10 @@
 #include <string>
 #include <chrono>
 
+#include "header.h"
+
 using namespace std;
 using namespace std::chrono;
-
-
-const string Convergence_Test_String="Convergence Test started";
-const string Simulation_Start_String= "Simulation has started";
-const string Simulation_End_String= "Finished in: ";
-const string File_String = "./Data/numerical_phi_ite";
 
 double Gaussian(double, double, double);
 
@@ -25,12 +21,17 @@ class WaveEquationSolver1D{
 
     public:
 
-    WaveEquationSolver1D(); //constructor
-    void Solve(double, double, double, double*, double, double, bool); //solver (unparallelized)
-	void PointConvergenceTest(double (*func1)(double), double (*func2)(double), string);//Tests the point-wise convergence of the used Fin. Diff. Method
-    void NormConvergenceTest(double (*func1)(double), double (*func2)(double), string); //Tests norm convergence
+    WaveEquationSolver1D(double, double, double(*func1)(double ), double(*func2)(double)); //constructor
+    void Solve(double, double, double, string); //solver (unparallelized)
+	void PointConvergenceTest(string);//Tests the point-wise convergence of the used Fin. Diff. Method
+    void NormConvergenceTest(string); //Tests norm convergence
 
     private:
+
+    double x_max;
+    double x_min;
+    double (*func1) (double);
+    double (*func2) (double);
 
     void SetInitialConditions(int, double*, double*);
     void FirstDerivative();

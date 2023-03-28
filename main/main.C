@@ -27,7 +27,7 @@ using namespace std::chrono;
 double dx=1E-2; //Space discretization (uniform)
 const double dt=1E-3; //Time discret.
 const double x_min=-1, x_max=1; //Space interval 
-const double simul_time = 3; //Simulation time
+const double simul_time = 2; //Simulation time
 const int number_iterations = simul_time / dt; //Number of iterations
 int N=(x_max - x_min) / dx; //Number of spatial cells
 const int number_ghosts = 3; // Number of ghost cells
@@ -45,8 +45,6 @@ double Zero(double x){
 double GaussianFixed(double x){
 	return 1/(sigma*sqrt(2*M_PI)) * exp(-0.5 * (x-x0)*(x-x0)/sigma/sigma);
 }
-
-
 
 int main(){
 
@@ -73,8 +71,11 @@ int main(){
     phi[j] = GaussianFixed(x_aux);
     pi[j] = 0;
   }
-  WaveEquationSolver1D WaveEquation;
-  WaveEquation.Solve(x_min,x_max,dx,y,dt,simul_time,true);
+  WaveEquationSolver1D WaveEquation(-1,1,GaussianFixed,Zero);
+  WaveEquation.Solve(dx,dt,simul_time, "a");
+
+  /*NonLinearWaveEquationSolver1D NLWaveEquation;
+  NLWaveEquation.Solve(x_min,x_max,dx,y,dt,simul_time,true);*/
 
   //WaveEquation.PointConvergenceTest(Sin, Zero, "./Data/sin_zero.dat");
   //WaveEquation.PointConvergenceTest(GaussianFixed, Zero, "./Data/gauss_zero.dat");
