@@ -16,6 +16,7 @@
 #include <string>
 #include <chrono>
 
+//#include "mpi.h"
 #include "header.h"
 #include "WaveEquationSolver1D.h"
 #include "NonLinearWaveEquationSolver1D.h"
@@ -72,12 +73,8 @@ int main(){
   WaveEquationSolver1D WaveEquation(-1,1,GaussianFixed,Zero);
   WaveEquation.Solve(dx,dt,simul_time, "a");
 
-  /*NonLinearWaveEquationSolver1D NLWaveEquation;
-  NLWaveEquation.Solve(x_min,x_max,dx,y,dt,simul_time,true);*/
-
-  //WaveEquation.PointConvergenceTest(Sin, Zero, "./Data/sin_zero.dat");
-  //WaveEquation.PointConvergenceTest(GaussianFixed, Zero, "./Data/gauss_zero.dat");
-  //WaveEquation.NormConvergenceTest(GaussianFixed, Zero, "./Data/norm_conv_gauss_zero.dat");
+  //WaveEquation.PointConvergenceTest("./Data/gauss_zero.dat");
+  //WaveEquation.NormConvergenceTest("./Data/norm_conv_gauss_zero.dat");
 
   return 0;
   

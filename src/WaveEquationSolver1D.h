@@ -9,8 +9,10 @@
 #include <iomanip> 
 #include <string>
 #include <chrono>
+#include "mpi.h"
 
 #include "header.h"
+
 
 using namespace std;
 using namespace std::chrono;

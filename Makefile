@@ -5,7 +5,8 @@ LIBDIR := lib
 
 CCFLAGS := -pedantic
 
-CC := g++ -std=c++17
+#CC := g++ -std=c++17
+CC:= mpicxx
 
 # src/ (declaration of functions, classes + code)
 # main/ (main)

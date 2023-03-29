@@ -36,6 +36,7 @@ void WaveEquationSolver1D::Saving_Data_File(int N, double* state_vector, double*
 }
 
 void WaveEquationSolver1D::SetInitialConditions(int N, double *y, double* axis){
+    
     for(int j=0; j<N; j++) y[j]=Initial_Condition_Phi(axis[j]);
     for(int j=N; j<2*N; j++) y[j]=Initial_Condition_Pi(axis[j]);
 }
@@ -51,6 +52,7 @@ void WaveEquationSolver1D::SecondDerivative(int N, double dx, double* field, dou
     }
     // calculate the second derivative with five points (-2,-1,0,1,2)
     // formula from https://web.media.mit.edu/~crtaylor/calculator.html
+    
     for(int j=0; j<N; j++){
         if(j==0) second_derivative_vector[j] = (-1*left_ghost_cells_field[number_ghosts-2]+16*left_ghost_cells_field[number_ghosts-1]-30*field[j+0]+16*field[j+1]-1*field[j+2])/(12*1.0*dx*dx);
         else if(j==1) second_derivative_vector[j] = (-1*left_ghost_cells_field[number_ghosts+1-2]+16*field[j-1]-30*field[j+0]+16*field[j+1]-1*field[j+2])/(12*1.0*dx*dx);
@@ -276,6 +278,5 @@ void WaveEquationSolver1D::NormConvergenceTest(string filename){
     cout<<Simulation_End_String<<duration.count()/1E6<<" s"<<endl;
 
     delete[] y_low, y_mid, y_high;
-
 
 }
