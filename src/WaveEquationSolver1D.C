@@ -42,6 +42,10 @@ void WaveEquationSolver1D::SetInitialConditions(int N, double *y, double* axis){
 }
 
 void WaveEquationSolver1D::SecondDerivative(int N, double dx, double* field, double* second_derivative_vector){
+	int rank, size;
+	//MPI_Comm_size(MPI_COMM_WORLD, &size);
+	//MPI_Comm_size(MPI_COMM_WORLD, &rank);
+	//printf("I'm proc. %d of %d\n", rank, size);
     int number_ghosts=3;
     double* right_ghost_cells_field = new double[number_ghosts];
     double* left_ghost_cells_field = new double[number_ghosts];
