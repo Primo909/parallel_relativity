@@ -4,6 +4,8 @@
 	return 1/(sigma*sqrt(2*M_PI)) * exp(-0.5 * (x-x0)*(x-x0)/sigma/sigma);
 }*/
 
+
+
 WaveEquationSolver1D::WaveEquationSolver1D(double XMIN, double XMAX, double(*FUNC1)(double ), double(*FUNC2)(double)){
     x_min=XMIN;
     x_max=XMAX;
@@ -39,13 +41,11 @@ void WaveEquationSolver1D::SetInitialConditions(int N, double *y, double* axis){
     
     for(int j=0; j<N; j++) y[j]=Initial_Condition_Phi(axis[j]);
     for(int j=N; j<2*N; j++) y[j]=Initial_Condition_Pi(axis[j]);
+
 }
 
 void WaveEquationSolver1D::SecondDerivative(int N, double dx, double* field, double* second_derivative_vector){
-	int rank, size;
-	//MPI_Comm_size(MPI_COMM_WORLD, &size);
-	//MPI_Comm_size(MPI_COMM_WORLD, &rank);
-	//printf("I'm proc. %d of %d\n", rank, size);
+	
     int number_ghosts=3;
     double* right_ghost_cells_field = new double[number_ghosts];
     double* left_ghost_cells_field = new double[number_ghosts];
@@ -69,6 +69,39 @@ void WaveEquationSolver1D::SecondDerivative(int N, double dx, double* field, dou
 
 }
 
+void WaveEquationSolver1D::Parallel_SecondDerivative(int N, double dx, double* field, double* second_derivative_vector){
+	
+    int size,rank;
+    int n_first, n_last;
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+    n_first = rank*N/size;
+    n_last = (rank+1)*N/size;
+
+    int number_ghosts=3;
+    double* right_ghost_cells_field = new double[number_ghosts];
+    double* left_ghost_cells_field = new double[number_ghosts];
+    // assign values to ghost cells
+    for(int j=0; j<number_ghosts; j++){
+        right_ghost_cells_field[j] = field[j];
+        left_ghost_cells_field[number_ghosts-1-j] = field[N-1-j];
+    }
+    // calculate the second derivative with five points (-2,-1,0,1,2)
+    // formula from https://web.media.mit.edu/~crtaylor/calculator.html
+    
+    for(int j=n_first; j<n_last; j++){
+        if(j==0) second_derivative_vector[j] = (-1*left_ghost_cells_field[number_ghosts-2]+16*left_ghost_cells_field[number_ghosts-1]-30*field[j+0]+16*field[j+1]-1*field[j+2])/(12*1.0*dx*dx);
+        else if(j==1) second_derivative_vector[j] = (-1*left_ghost_cells_field[number_ghosts+1-2]+16*field[j-1]-30*field[j+0]+16*field[j+1]-1*field[j+2])/(12*1.0*dx*dx);
+        else if(j==N-1) second_derivative_vector[j] = (-1*field[j-2]+16*field[j-1]-30*field[j+0]+16*right_ghost_cells_field[0]-1*right_ghost_cells_field[1])/(12*1.0*dx*dx);
+        else if(j==N-2) second_derivative_vector[j] = (-1*field[j-2]+16*field[j-1]-30*field[j+0]+16*field[j+1]-1*right_ghost_cells_field[0])/(12*1.0*dx*dx);
+        else second_derivative_vector[j] = (-1*field[j-2]+16*field[j-1]-30*field[j+0]+16*field[j+1]-1*field[j+2])/(12*1.0*dx*dx);
+    }
+    // delete the ghost cells
+    delete[] left_ghost_cells_field, right_ghost_cells_field;
+
+}
+
 void WaveEquationSolver1D::RHS(int N, double dx, double* state_vector, double* rhs_vector){
     double* phi = &state_vector[0];
     double* pi = &state_vector[N];
@@ -77,6 +110,25 @@ void WaveEquationSolver1D::RHS(int N, double dx, double* state_vector, double* r
     //for(int j=0; j<N; j++) cout<<phi[j]<<" "<<rhs_vector[j]<<endl;
     //for(int j=0; j<N; j++) cout<<pi[j]<<" "<<rhs_vector[N+j]/(2*M_PI*2*M_PI)<<endl;
 }
+
+void WaveEquationSolver1D::Parallel_RHS(int N, double dx, double* state_vector, double* rhs_vector){
+    
+    int size,rank;
+    int n_first, n_last;
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+    n_first = rank*N/size;
+    n_last = (rank+1)*N/size;
+    
+    double* phi = &state_vector[0];
+    double* pi = &state_vector[N];
+    for(int j=n_first; j<n_last; j++) rhs_vector[j] = pi[j];
+    Parallel_SecondDerivative(N, dx, phi, &rhs_vector[N]);
+    //for(int j=0; j<N; j++) cout<<phi[j]<<" "<<rhs_vector[j]<<endl;
+    //for(int j=0; j<N; j++) cout<<pi[j]<<" "<<rhs_vector[N+j]/(2*M_PI*2*M_PI)<<endl;
+}
+
 
 void WaveEquationSolver1D::RuggeKutta(int N, double dx, double dt, double* state_vector){
     double* k1 = new double[2*N];
@@ -98,10 +150,46 @@ void WaveEquationSolver1D::RuggeKutta(int N, double dx, double dt, double* state
     delete[] vector_temp,k1,k2,k3,k4;
 }
 
+void WaveEquationSolver1D::Parallel_RuggeKutta(int N, double dx, double dt, double* state_vector){
+        
+    int size,rank;
+    int n_first, n_last;
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+    n_first = rank* 2*N/size;
+    n_last = (rank+1)*2*N/size;
+
+    double* k1 = new double[2*N];
+    double* k2 = new double[2*N];
+    double* k3 = new double[2*N];
+    double* k4 = new double[2*N];
+
+    double* vector_temp = new double[2*N];
+
+    Parallel_RHS(N,dx,state_vector, k1); // Calc k1
+    for(int j=n_first; j<n_last; j++) vector_temp[j] = state_vector[j]+dt*k1[j]/2;
+    Parallel_RHS(N,dx,vector_temp, k2); // Calc k2
+    for(int j=n_first; j<n_last; j++) vector_temp[j] = state_vector[j]+dt*k2[j]/2; 
+    Parallel_RHS(N,dx,vector_temp, k3); // Calc k3
+    for(int j=n_first; j<n_last; j++) vector_temp[j] = state_vector[j]+dt*k3[j];
+    Parallel_RHS(N,dx,vector_temp, k4);// Calc k4
+    for(int j=n_first; j<n_last; j++) state_vector[j] = state_vector[j]+(k1[j] + 2*k2[j] + 2*k3[j] +k4[j])*dt/6; // Overwrite the state vector
+
+    delete[] vector_temp,k1,k2,k3,k4;
+}
+
 void WaveEquationSolver1D::Solve(double dx, double dt=1E-3, double simul_time=2, string file_name=""){
 
-    auto start = high_resolution_clock::now(); //Counting time
-    cout<<Simulation_Start_String<<endl;
+    int size,rank;
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+    double startwtime = 0.0, endwtime;
+    if(rank==0){
+        startwtime = MPI_Wtime();
+        cout<<Simulation_Start_String<<endl;
+    }
 
     int N=(x_max-x_min)/dx;
     int number_iterations = simul_time / dt;
@@ -120,14 +208,55 @@ void WaveEquationSolver1D::Solve(double dx, double dt=1E-3, double simul_time=2,
         if(file_name!="") Saving_Data_File(N,y,axis,i);
     }
 
-    auto stop = high_resolution_clock::now();
-	auto duration = duration_cast<microseconds>(stop - start);
-	cout<<endl;
-    cout<<Simulation_End_String<<":  "<<duration.count()/1E6<<" s"<<endl;
+    if(rank==0){
+        endwtime = MPI_Wtime();
+        cout<<Simulation_End_String<<endl;
+        cout<<endwtime<<endl;
+    }
 
     delete[] axis,y;
 
 }
+
+void WaveEquationSolver1D::Parallel_Solve(double dx, double dt=1E-3, double simul_time=2, string file_name=""){
+
+    int size,rank;
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+    double startwtime = 0.0, endwtime;
+    if(rank==0){
+        startwtime = MPI_Wtime();
+        cout<<"Parallel "<< Simulation_Start_String<<endl;
+    }
+        
+    int N=(x_max-x_min)/dx;
+    int number_iterations = simul_time / dt;
+
+    double* y= new double[2*N];
+    double *phi= &y[0];
+    double *pi= &y[N];
+
+    double* axis= new double[N];
+    for(int j=0; j<N; j++) axis[j]=x_min+j*dx;
+
+    SetInitialConditions(N, y, axis);
+
+    for(int i=0; i<number_iterations; i++){
+        Parallel_RuggeKutta(N,dx,dt,y);
+        if(file_name!="") Saving_Data_File(N,y,axis,i);
+    }
+
+    delete[] axis,y;
+
+    if(rank==0){
+        endwtime = MPI_Wtime();
+        cout<<Simulation_End_String<<endl;
+        cout<<endwtime<<endl;
+    }
+
+}
+
 
 void WaveEquationSolver1D::PointConvergenceTest(string filename){
 

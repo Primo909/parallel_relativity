@@ -46,7 +46,6 @@ double GaussianFixed(double x){
 }
 
 int main(int argc, char* argv[]){
-  MPI_Init(&argc, &argv);
 
    // define fields
   double* y = new double[2*N];
@@ -65,24 +64,42 @@ int main(int argc, char* argv[]){
   // for a Gaussian
   double x0=0;
 	double sigma=0.5;
-  int size,rank;
+
+  WaveEquationSolver1D WaveEquation(-1,1,GaussianFixed,Zero);
+
+  MPI_Init(&argc, &argv);
+
+  /*int size,rank;
+  int my_first, my_last;
+  
   MPI_Comm_size(MPI_COMM_WORLD, &size);
-  MPI_Comm_size(MPI_COMM_WORLD, &rank);
-  int my_first = rank * N / size;
-  int my_last = (rank+1) * N / size;
-  for(int j=0; j<N; j++){
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  my_first = rank* N/size;
+  my_last = (rank+1)*N/size;
+
+  cout<<rank<<" "<<size<<endl;
+
+  cout<<my_first<<" "<<my_last<<endl;
+
+  for(int j=my_first; j<my_last; j++){
     x_aux = x_min+j*dx;
 
     phi[j] = GaussianFixed(x_aux);
     pi[j] = 0;
-	cout << rank <<"     "<< phi[j] << endl;
-  }
-  WaveEquationSolver1D WaveEquation(-1,1,GaussianFixed,Zero);
-  WaveEquation.Solve(dx,dt,simul_time, "");
-
+  }*/
+  
+  
+  //WaveEquation.Solve(dx,dt,simul_time, "");
+  //WaveEquation.Solve(dx,dt,simul_time, "");
+  WaveEquation.Solve(dx,dt,simul_time, "a");
+  
   //WaveEquation.PointConvergenceTest("./Data/gauss_zero.dat");
   //WaveEquation.NormConvergenceTest("./Data/norm_conv_gauss_zero.dat");
+
   MPI_Finalize();
+
+
+  
   return 0;
   
 }
