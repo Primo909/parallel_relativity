@@ -13,6 +13,7 @@
         "ostream": "cpp",
         "NonLinearWaveEquationSolver1D.C": "cpp",
         "fstream": "cpp",
-        "chrono": "cpp"
+        "chrono": "cpp",
+        "parallel_main.C": "cpp"
     }
 }

@@ -16,7 +16,7 @@
 #include <string>
 #include <chrono>
 
-//#include "mpi.h"
+#include "mpi.h"
 #include "header.h"
 #include "WaveEquationSolver1D.h"
 #include "NonLinearWaveEquationSolver1D.h"
@@ -41,6 +41,7 @@ double Sin(double x){
 double Zero(double x){
   return 0;
 }
+
 double GaussianFixed(double x){
 	return 1/(sigma*sqrt(2*M_PI)) * exp(-0.5 * (x-x0)*(x-x0)/sigma/sigma);
 }
@@ -65,9 +66,11 @@ int main(int argc, char* argv[]){
   double x0=0;
 	double sigma=0.5;
 
-  WaveEquationSolver1D WaveEquation(-1,1,GaussianFixed,Zero);
+  //double* y= new double[N];
 
-  MPI_Init(&argc, &argv);
+  WaveEquationSolver1D WaveEquation(-1,1,GaussianFixed,Zero);
+  
+  //MPI_Init(&argc, &argv);
 
   /*int size,rank;
   int my_first, my_last;
@@ -88,15 +91,17 @@ int main(int argc, char* argv[]){
     pi[j] = 0;
   }*/
   
-  
   //WaveEquation.Solve(dx,dt,simul_time, "");
   //WaveEquation.Solve(dx,dt,simul_time, "");
-  WaveEquation.Solve(dx,dt,simul_time, "a");
+  //WaveEquation.Solve(dx,dt,simul_time, "a");
+  //WaveEquation.Parallel_Solve(dx,dt,simul_time, "");
   
   //WaveEquation.PointConvergenceTest("./Data/gauss_zero.dat");
   //WaveEquation.NormConvergenceTest("./Data/norm_conv_gauss_zero.dat");
 
-  MPI_Finalize();
+  //MPI_Finalize();
+
+  
 
 
   
