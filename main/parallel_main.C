@@ -22,8 +22,8 @@
 using namespace std;
 using namespace std::chrono;
 
-double dx=1E-2; //Space discretization (uniform)
-const double dt=1E-3; //Time discret.
+double dx=1E-3; //Space discretization (uniform)
+const double dt=1E-4; //Time discret.
 const double x_min=-1, x_max=1; //Space interval 
 const double simul_time = 2; //Simulation time
 const int number_iterations = simul_time / dt; //Number of iterations
@@ -44,6 +44,22 @@ double GaussianFixed(double x){
 	return 1/(sigma*sqrt(2*M_PI)) * exp(-0.5 * (x-x0)*(x-x0)/sigma/sigma);
 }
 
+void Saving_Data_File(int N, double* state_vector, double* Axis, int iteration){
+
+    string string_aux=File_String+to_string(iteration+1)+".dat";
+
+    fstream ITERATION_FILE;
+    ITERATION_FILE.open(string_aux,ios::out);
+
+    if (!ITERATION_FILE){                 
+        cout<<"Error: File not created"<<endl;    
+    }
+
+    for(int j=0; j<N; j++) ITERATION_FILE<<Axis[j]<<" "<<state_vector[j]<<endl;
+
+    ITERATION_FILE.close();   
+}
+
 void ParallelSecondDerivative(int n, double dx, double* field, double* second_derivative_field){
 
     int size,id;
@@ -51,8 +67,6 @@ void ParallelSecondDerivative(int n, double dx, double* field, double* second_de
 
     MPI_Comm_size(MPI_COMM_WORLD, &size);
     MPI_Comm_rank(MPI_COMM_WORLD, &id);
-
-    //double* second_derivative_field=new double[n];
 
     double* guard_cells_send= new double[2*number_ghosts];
     double* guard_cells_recv= new double[2*number_ghosts];
@@ -64,10 +78,6 @@ void ParallelSecondDerivative(int n, double dx, double* field, double* second_de
     guard_cells_send[2]=field[n-2];
     guard_cells_send[3]=field[n-1];
 
-    /*if(id==0){
-        for(int j=0; j<2*number_ghosts; j++) cout<<id<<" "<<guard_cells_send[j]<<endl;
-    }*/
-
     int tag1=10,tag2=12;
     MPI_Request request1,request2;
     
@@ -76,9 +86,6 @@ void ParallelSecondDerivative(int n, double dx, double* field, double* second_de
     int left_id= (id-1+size)%size;
     int right_id= (id+1+size)%size;
 
-    //cout<<left_id<<" "<<id<<" "<<right_id<<endl;
-
-    ////AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
     MPI_Isend(&guard_cells_send[0], number_ghosts, MPI_DOUBLE, left_id, tag1, MPI_COMM_WORLD, &request1);
     MPI_Irecv(&guard_cells_recv[0], number_ghosts, MPI_DOUBLE, right_id, tag1, MPI_COMM_WORLD, &request1);
     MPI_Isend(&guard_cells_send[2], number_ghosts, MPI_DOUBLE, right_id, tag2, MPI_COMM_WORLD, &request2);
@@ -86,12 +93,6 @@ void ParallelSecondDerivative(int n, double dx, double* field, double* second_de
 
     MPI_Wait(&request1, &status1);
     MPI_Wait(&request2, &status2);
-
-    //for(int j=0; j<2*number_ghosts; j++) cout<<id<<" "<<guard_cells_send[j]<<" "<<guard_cells_recv[j]<<endl;
-
-    /*if(id==1){
-        for(int j=0; j<2*number_ghosts; j++) cout<<id<<" "<<guard_cells_recv[j]<<endl;
-    }*/
 
     for(int j=0; j<n; j++){
         if(j==0) second_derivative_field[j] = (-1*guard_cells_recv[2]+16*guard_cells_recv[3]-30*field[j+0]+16*field[j+1]-1*field[j+2])/(12*1.0*dx*dx);
@@ -116,10 +117,7 @@ void ParallelRHS(int n, double dx, double* state_vector, double* rhs_vector){
     double* pi = &state_vector[n];
     
     for(int j=0; j<n; j++) rhs_vector[j] = pi[j];
-    //for(int j=0; j<n; j++) rhs_vector[j+n]= 1;
     ParallelSecondDerivative(n, dx, phi, &rhs_vector[n]);
-    //for(int j=0; j<N; j++) cout<<phi[j]<<" "<<rhs_vector[j]<<endl;
-    //for(int j=0; j<N; j++) cout<<pi[j]<<" "<<rhs_vector[N+j]/(2*M_PI*2*M_PI)<<endl;
     MPI_Barrier(MPI_COMM_WORLD); //make sure they are syncronized
 
 }
@@ -136,7 +134,7 @@ void ParallelRungeKutta(int n, double dx, double dt, double* state_vector){
     double* k4 = new double[2*n];
 
     double* vector_temp = new double[2*n];
-    
+
     ParallelRHS(n,dx,state_vector, k1); // Calc k1
     for(int j=0; j<2*n; j++) vector_temp[j] = state_vector[j]+dt*k1[j]/2;
     MPI_Barrier(MPI_COMM_WORLD); //make sure they are syncronized
@@ -152,9 +150,98 @@ void ParallelRungeKutta(int n, double dx, double dt, double* state_vector){
 
 
     delete[] vector_temp,k1,k2,k3,k4;
+
 }
 
+void PointConvergenceTest(string filename){
 
+    fstream POINT_CONV_FILE;
+    POINT_CONV_FILE.open(filename,ios::out);
+
+    if (!POINT_CONV_FILE){
+		cout<<"Error: File not created"<<endl;    
+    }
+
+    int size,id;
+
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+    MPI_Comm_rank(MPI_COMM_WORLD, &id);
+
+	// T = simulation time
+    double T=1.2;
+    double dt=1E-4;
+    int number_iterations= T/dt;
+
+    double dx_low=5E-3; //lowest resolution
+    int N_low=(x_max-x_min)/dx_low;
+    int n_low=N_low/size;
+    double dx_mid=dx_low/2; //middle resolution
+    int N_mid=(x_max-x_min)/dx_mid;
+    int n_mid=N_mid/size;
+    double dx_high=dx_mid/2; //highest resolution
+    int N_high=(x_max-x_min)/dx_high;
+    int n_high=N_high/size;
+
+    double* y_low= new double[2*n_low];
+    double* y_mid= new double[2*n_mid];
+    double* y_high = new double[2*n_high];
+
+	double phi_ratio; 
+	double phi_low_mid;
+	double phi_mid_high;
+
+    double sigma=1;
+    double x_aux;
+    double x0=0;
+
+    for(int j=0; j<n_low; j++){ 
+        x_aux=x_min+id*n_low+j*dx_low;
+        y_low[j]=GaussianFixed(x_aux); //initial condition phi
+        y_low[n_low+j]=Zero(x_aux); //initial condition pi
+    }
+    for(int j=0; j<n_mid; j++){ 
+        x_aux=x_min+id*n_mid+j*dx_mid;
+        y_mid[j]=GaussianFixed(x_aux); //initial condition phi
+        y_mid[n_mid+j]=Zero(x_aux); //initial condition pi
+    }    
+    for(int j=0; j<n_high; j++){ 
+        x_aux=x_min+id*n_high+j*dx_high;
+        y_high[j]=GaussianFixed(x_aux); //initial condition phi
+        y_high[n_high+j]=Zero(x_aux); //initial condition pi
+    }
+
+    MPI_Barrier(MPI_COMM_WORLD); //make sure they are syncronized
+
+    for(int i=0; i<number_iterations; i++){
+        ParallelRungeKutta(n_low,dx_low,dt,y_low);
+        ParallelRungeKutta(n_mid,dx_mid,dt,y_mid);
+        ParallelRungeKutta(n_high,dx_high,dt,y_high);
+    }
+
+    double *PHI_LOW = new double[N_low];
+    double *PHI_MID = new double[N_mid];
+    double *PHI_HIGH = new double[N_high];
+    
+    MPI_Gather(y_low,n_low,MPI_DOUBLE,PHI_LOW,n_low,MPI_DOUBLE,0,MPI_COMM_WORLD);
+    MPI_Gather(y_low,n_mid,MPI_DOUBLE,PHI_MID,n_mid,MPI_DOUBLE,0,MPI_COMM_WORLD);
+    MPI_Gather(y_high,n_high,MPI_DOUBLE,PHI_HIGH,n_high,MPI_DOUBLE,0,MPI_COMM_WORLD);
+
+    if(id==0){
+        for(int i=0; i<N_low; i++){
+            phi_low_mid = PHI_LOW[i] - PHI_MID[2*i];
+            phi_mid_high = PHI_MID[2*i] - PHI_HIGH[4*i];
+            phi_ratio = phi_low_mid / phi_mid_high;
+            POINT_CONV_FILE << "     " << phi_low_mid << "     " << phi_mid_high << "    " << phi_ratio << endl;
+        }
+    }
+
+    POINT_CONV_FILE.close();
+
+    //Info_Conv_Test(dx_low,filename);
+
+    delete[] y_low, y_mid, y_high, PHI_HIGH, PHI_LOW, PHI_MID;
+
+}
 
 int main(int argc, char* argv[]){
 
@@ -185,7 +272,6 @@ int main(int argc, char* argv[]){
     for(int j=0; j<n; j++){
         y[j]=GaussianFixed(axis[j]); //initial condition phi
         y[n+j]=Zero(axis[j]); //initial condition pi
-        //if(id==0) cout<<y[j]<<"  "<<y[j+N]<<endl;
     }
 
     MPI_Barrier(MPI_COMM_WORLD); //make sure they are syncronized
@@ -197,27 +283,12 @@ int main(int argc, char* argv[]){
 
     for(int i=0; i<number_iterations; i++){
 
-        string string_aux=File_String+to_string(i+1)+".dat";
-
-        fstream ITERATION_FILE;
-        ITERATION_FILE.open(string_aux,ios::out);
-
-        if (!ITERATION_FILE){                 
-            cout<<"Error: File not created"<<endl;    
-        }
-
-        //if(id==1) cout<<y[10]<<endl;
-
         ParallelRungeKutta(n, dx, dt, y);
         MPI_Gather(y,n,MPI_DOUBLE,PHI,n,MPI_DOUBLE,0,MPI_COMM_WORLD);
-        if(id==0){
-            for(int j=0; j<N; j++) ITERATION_FILE<<AXIS[j]<<" "<<PHI[j]<<endl;
-        }
-
-        ITERATION_FILE.close();
-
+        //if() Saving_Data_File(N, y, AXIS, i);
     }
 
+    PointConvergenceTest("./Data/gauss.dat");
 
 
     if(id==0){
@@ -226,57 +297,6 @@ int main(int argc, char* argv[]){
         cout<<endwtime-startwtime<<endl;
     }
 
-    /*double* second_derivative_phi=new double[n];
-
-    ParallelSecondDerivative(n,dx,phi,second_derivative_phi);
-    */
-
-    /*double* guard_cells_send= new double[2*number_ghosts];
-    double* guard_cells_recv= new double[2*number_ghosts];
-    //Guard cell sending position [0 1][######][3 2]
-    //Left guard cells
-    guard_cells_send[0]=phi[0];
-    guard_cells_send[1]=phi[1];
-    //Right guard cells
-    guard_cells_send[2]=phi[n-1];
-    guard_cells_send[3]=phi[n-2];
-
-    /*if(id==0){
-        for(int j=0; j<2*number_ghosts; j++) cout<<id<<" "<<guard_cells_send[j]<<endl;
-    }
-
-    int tag1=10,tag2=12;
-    MPI_Request request1,request2;
-    
-    MPI_Status status1,status2;
-    
-    int left_id= (id-1+size)%size;
-    int right_id= (id+1+size)%size;
-
-    //cout<<left_id<<" "<<id<<" "<<right_id<<endl;
-
-    MPI_Isend(&guard_cells_send[0], number_ghosts, MPI_DOUBLE, left_id, tag1, MPI_COMM_WORLD, &request1);
-    MPI_Irecv(&guard_cells_recv[2], number_ghosts, MPI_DOUBLE, right_id, tag1, MPI_COMM_WORLD, &request1);
-    MPI_Isend(&guard_cells_send[2], number_ghosts, MPI_DOUBLE, right_id, tag2, MPI_COMM_WORLD, &request2);
-    MPI_Irecv(&guard_cells_recv[0], number_ghosts, MPI_DOUBLE, left_id, tag2, MPI_COMM_WORLD, &request2);
-
-    MPI_Wait(&request1, &status1);
-    MPI_Wait(&request2, &status2);
-
-    //for(int j=0; j<2*number_ghosts; j++) cout<<id<<" "<<guard_cells_send[j]<<" "<<guard_cells_recv[j]<<endl;
-
-    /*if(id==1){
-        for(int j=0; j<2*number_ghosts; j++) cout<<id<<" "<<guard_cells_recv[j]<<endl;
-    }
-
-    for(int j=0; j<n; j++){
-        if(j==0) second_derivative_phi[j] = (-1*guard_cells_recv[0]+16*guard_cells_recv[1]-30*phi[j+0]+16*phi[j+1]-1*phi[j+2])/(12*1.0*dx*dx);
-        else if(j==1) second_derivative_phi[j] = (-1*guard_cells_recv[1]+16*phi[j-1]-30*phi[j+0]+16*phi[j+1]-1*phi[j+2])/(12*1.0*dx*dx);
-        else if(j==n-1) second_derivative_phi[j] = (-1*phi[j-2]+16*phi[j-1]-30*phi[j+0]+16*guard_cells_recv[2]-1*guard_cells_recv[3])/(12*1.0*dx*dx);
-        else if(j==n-2) second_derivative_phi[j] = (-1*phi[j-2]+16*phi[j-1]-30*phi[j+0]+16*phi[j+1]-1*guard_cells_recv[2])/(12*1.0*dx*dx);
-        else second_derivative_phi[j] = (-1*phi[j-2]+16*phi[j-1]-30*phi[j+0]+16*phi[j+1]-1*phi[j+2])/(12*1.0*dx*dx);
-    }
-    */
     MPI_Finalize();
 
     return 0;
