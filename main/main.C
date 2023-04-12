@@ -16,7 +16,7 @@
 #include <string>
 #include <chrono>
 
-#include "mpi.h"
+//#include "mpi.h" // commented this because it was not compiling main.C, also not relevant here
 #include "header.h"
 #include "WaveEquationSolver1D.h"
 #include "NonLinearWaveEquationSolver1D.h"
@@ -24,12 +24,12 @@
 using namespace std;
 using namespace std::chrono;
 
-double dx=1E-3; //Space discretization (uniform)
+int N=1000; //Space discretization (uniform)
 const double dt=1E-4; //Time discret.
 const double x_min=-1, x_max=1; //Space interval 
 const double simul_time = 2; //Simulation time
 const int number_iterations = simul_time / dt; //Number of iterations
-int N=(x_max - x_min) / dx; //Number of spatial cells
+int dx = 0; //Number of spatial cells
 const int number_ghosts = 3; // Number of ghost cells
 
 double sigma = 0.1;
@@ -49,6 +49,12 @@ double GaussianFixed(double x){
 int main(int argc, char* argv[]){
 
    // define fields
+  int N = atoi(argv[1]);
+  double dx=(x_max-x_min)/N;
+  cout << "dx = " << dx << endl;
+
+  auto start = high_resolution_clock::now(); //Counting time
+
   double* y = new double[2*N];
   double* phi = &y[0];
   double* pi = &y[N];
@@ -101,9 +107,11 @@ int main(int argc, char* argv[]){
 
   //MPI_Finalize();
 
+  auto stop = high_resolution_clock::now();
+	auto duration = duration_cast<microseconds>(stop - start);
+  cout<<Simulation_End_String<<endl;
+  cout << "control," << N << "," << duration.count()/1E6 << endl;
   
-
-
   
   return 0;
   

@@ -42,7 +42,6 @@ void WaveEquationSolver1D::Saving_Data_File(int N, double* state_vector, double*
 }
 
 void WaveEquationSolver1D::SetInitialConditions(int N, double *y, double* axis){
-    
     for(int j=0; j<N; j++) y[j]=Initial_Condition_Phi(axis[j]);
     for(int j=N; j<2*N; j++) y[j]=Initial_Condition_Pi(axis[j]);
 
