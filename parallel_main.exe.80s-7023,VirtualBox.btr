@@ -1,0 +1,8 @@
+
+parallel_main.exe:7023 terminated with signal 11 at PC=7f7d78647580 SP=7ffd7f72a970.  Backtrace:
+/lib/x86_64-linux-gnu/libc.so.6(+0x47580)[0x7f7d78647580]
+/lib/x86_64-linux-gnu/libc.so.6(atoi+0x14)[0x7f7d78643654]
+./bin/parallel_main.exe(+0x4b41)[0x558db0951b41]
+/lib/x86_64-linux-gnu/libc.so.6(+0x29d90)[0x7f7d78629d90]
+/lib/x86_64-linux-gnu/libc.so.6(__libc_start_main+0x80)[0x7f7d78629e40]
+./bin/parallel_main.exe(+0x2735)[0x558db094f735]

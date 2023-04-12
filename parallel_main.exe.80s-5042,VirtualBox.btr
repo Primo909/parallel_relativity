@@ -1,0 +1,17 @@
+
+parallel_main.exe:5042 terminated with signal 6 at PC=7faf9f296a7c SP=7fff85908810.  Backtrace:
+/lib/x86_64-linux-gnu/libc.so.6(pthread_kill+0x12c)[0x7faf9f296a7c]
+/lib/x86_64-linux-gnu/libc.so.6(raise+0x16)[0x7faf9f242476]
+/lib/x86_64-linux-gnu/libc.so.6(abort+0xd3)[0x7faf9f2287f3]
+/lib/x86_64-linux-gnu/libc.so.6(+0x896f6)[0x7faf9f2896f6]
+/lib/x86_64-linux-gnu/libc.so.6(+0xa0d7c)[0x7faf9f2a0d7c]
+/lib/x86_64-linux-gnu/libc.so.6(+0xa2f96)[0x7faf9f2a2f96]
+/lib/x86_64-linux-gnu/libc.so.6(free+0x73)[0x7faf9f2a54d3]
+/lib/x86_64-linux-gnu/libstdc++.so.6(_ZNSt13basic_filebufIcSt11char_traitsIcEE26_M_destroy_internal_bufferEv+0x22)[0x7faf9f714e82]
+/lib/x86_64-linux-gnu/libstdc++.so.6(_ZNSt13basic_filebufIcSt11char_traitsIcEE5closeEv+0x57)[0x7faf9f7182e7]
+/lib/x86_64-linux-gnu/libstdc++.so.6(_ZNSt13basic_fstreamIcSt11char_traitsIcEE5closeEv+0x11)[0x7faf9f71a031]
+./bin/parallel_main.exe(+0x3ee2)[0x55c3d74c6ee2]
+./bin/parallel_main.exe(+0x432a)[0x55c3d74c732a]
+/lib/x86_64-linux-gnu/libc.so.6(+0x29d90)[0x7faf9f229d90]
+/lib/x86_64-linux-gnu/libc.so.6(__libc_start_main+0x80)[0x7faf9f229e40]
+./bin/parallel_main.exe(+0x26b5)[0x55c3d74c56b5]

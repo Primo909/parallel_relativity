@@ -22,12 +22,12 @@
 using namespace std;
 using namespace std::chrono;
 
-double dx=1E-3; //Space discretization (uniform)
+int N=1000; //Space discretization (uniform)
 const double dt=1E-4; //Time discret.
 const double x_min=-1, x_max=1; //Space interval 
 const double simul_time = 2; //Simulation time
 const int number_iterations = simul_time / dt; //Number of iterations
-int N=(x_max - x_min) / dx; //Number of spatial cells
+double dx = 0;
 const int number_ghosts = 2; // Number of ghost cells
 const double x0=(x_max+x_min)/2;
 const double sigma=0.1;
@@ -339,10 +339,14 @@ int main(int argc, char* argv[]){
     MPI_Init(&argc, &argv);
 
     int size,id;
+    int N = atoi(argv[1]);
+    double dx=(x_max-x_min)/N;
 
     MPI_Comm_size(MPI_COMM_WORLD, &size);
     MPI_Comm_rank(MPI_COMM_WORLD, &id);
 
+    if(id==0) cout << "Computing on " << size << " cores." << endl;
+    if(id==0) cout << "dx = " << dx << endl;
     double startwtime = 0.0, endwtime;
     if(id==0){
         startwtime = MPI_Wtime();
@@ -380,12 +384,12 @@ int main(int argc, char* argv[]){
     
     }
 
-    NormConvergenceTest("./Data/gauss_zero.dat");
+    //PointConvergenceTest("./Data/gauss_zero.dat");
 
     if(id==0){
         endwtime = MPI_Wtime();
         cout<<Simulation_End_String<<endl;
-        cout<<endwtime-startwtime<<endl;
+        cout<<"control,"<<N<<","<<size<<","<<endwtime-startwtime<<endl;
     }
 
     MPI_Finalize();
