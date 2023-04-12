@@ -24,8 +24,8 @@
 using namespace std;
 using namespace std::chrono;
 
-double dx=1E-2; //Space discretization (uniform)
-const double dt=1E-3; //Time discret.
+double dx=1E-3; //Space discretization (uniform)
+const double dt=1E-4; //Time discret.
 const double x_min=-1, x_max=1; //Space interval 
 const double simul_time = 2; //Simulation time
 const int number_iterations = simul_time / dt; //Number of iterations
@@ -69,7 +69,7 @@ int main(int argc, char* argv[]){
   //double* y= new double[N];
 
   WaveEquationSolver1D WaveEquation(-1,1,GaussianFixed,Zero);
-  
+
   //MPI_Init(&argc, &argv);
 
   /*int size,rank;
@@ -91,7 +91,7 @@ int main(int argc, char* argv[]){
     pi[j] = 0;
   }*/
   
-  //WaveEquation.Solve(dx,dt,simul_time, "");
+  WaveEquation.Solve(dx,dt,simul_time, "");
   //WaveEquation.Solve(dx,dt,simul_time, "");
   //WaveEquation.Solve(dx,dt,simul_time, "a");
   //WaveEquation.Parallel_Solve(dx,dt,simul_time, "");

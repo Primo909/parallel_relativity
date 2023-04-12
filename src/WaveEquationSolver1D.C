@@ -201,6 +201,8 @@ void WaveEquationSolver1D::Solve(double dx, double dt=1E-3, double simul_time=2,
         cout<<Simulation_Start_String<<endl;
     }*/
 
+  	auto start = high_resolution_clock::now(); //Counting time
+
     int N=(x_max-x_min)/dx;
     int number_iterations = simul_time / dt;
 
@@ -223,6 +225,11 @@ void WaveEquationSolver1D::Solve(double dx, double dt=1E-3, double simul_time=2,
         cout<<Simulation_End_String<<endl;
         cout<<endwtime-startwtime<<endl;
     }*/
+
+    auto stop = high_resolution_clock::now();
+	auto duration = duration_cast<microseconds>(stop - start);
+	cout<<endl;
+	cout<<Simulation_End_String<<" ---- RUNTIME: "<<duration.count()/1E6<<" seconds"<<endl;
 
     delete[] axis,y;
 

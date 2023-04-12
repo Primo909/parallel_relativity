@@ -44,7 +44,7 @@ double GaussianFixed(double x){
 	return 1/(sigma*sqrt(2*M_PI)) * exp(-0.5 * (x-x0)*(x-x0)/sigma/sigma);
 }
 
-void SecondDerivative(int n, double dx, double* field, double* second_derivative_field){
+void ParallelSecondDerivative(int n, double dx, double* field, double* second_derivative_field){
 
     int size,id;
     int my_first, my_last;
@@ -78,6 +78,7 @@ void SecondDerivative(int n, double dx, double* field, double* second_derivative
 
     //cout<<left_id<<" "<<id<<" "<<right_id<<endl;
 
+    ////AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
     MPI_Isend(&guard_cells_send[0], number_ghosts, MPI_DOUBLE, left_id, tag1, MPI_COMM_WORLD, &request1);
     MPI_Irecv(&guard_cells_recv[0], number_ghosts, MPI_DOUBLE, right_id, tag1, MPI_COMM_WORLD, &request1);
     MPI_Isend(&guard_cells_send[2], number_ghosts, MPI_DOUBLE, right_id, tag2, MPI_COMM_WORLD, &request2);
@@ -105,22 +106,72 @@ void SecondDerivative(int n, double dx, double* field, double* second_derivative
 
 }
 
+void ParallelRHS(int n, double dx, double* state_vector, double* rhs_vector){
+    
+    int size,id;
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+    MPI_Comm_rank(MPI_COMM_WORLD, &id);
+
+    double* phi = &state_vector[0];
+    double* pi = &state_vector[n];
+    
+    for(int j=0; j<n; j++) rhs_vector[j] = pi[j];
+    //for(int j=0; j<n; j++) rhs_vector[j+n]= 1;
+    ParallelSecondDerivative(n, dx, phi, &rhs_vector[n]);
+    //for(int j=0; j<N; j++) cout<<phi[j]<<" "<<rhs_vector[j]<<endl;
+    //for(int j=0; j<N; j++) cout<<pi[j]<<" "<<rhs_vector[N+j]/(2*M_PI*2*M_PI)<<endl;
+    MPI_Barrier(MPI_COMM_WORLD); //make sure they are syncronized
+
+}
+
+void ParallelRungeKutta(int n, double dx, double dt, double* state_vector){
+        
+    int size,id;
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+    MPI_Comm_rank(MPI_COMM_WORLD, &id);
+
+    double* k1 = new double[2*n];
+    double* k2 = new double[2*n];
+    double* k3 = new double[2*n];
+    double* k4 = new double[2*n];
+
+    double* vector_temp = new double[2*n];
+    
+    ParallelRHS(n,dx,state_vector, k1); // Calc k1
+    for(int j=0; j<2*n; j++) vector_temp[j] = state_vector[j]+dt*k1[j]/2;
+    MPI_Barrier(MPI_COMM_WORLD); //make sure they are syncronized
+    ParallelRHS(n,dx,vector_temp, k2); // Calc k2
+    for(int j=0; j<2*n; j++) vector_temp[j] = state_vector[j]+dt*k2[j]/2; 
+    MPI_Barrier(MPI_COMM_WORLD); //make sure they are syncronized
+    ParallelRHS(n,dx,vector_temp, k3); // Calc k3
+    for(int j=0; j<2*n; j++) vector_temp[j] = state_vector[j]+dt*k3[j];
+    MPI_Barrier(MPI_COMM_WORLD); //make sure they are syncronized
+    ParallelRHS(n,dx,vector_temp, k4);// Calc k4
+    for(int j=0; j<2*n; j++) state_vector[j] = state_vector[j]+(k1[j] + 2*k2[j] + 2*k3[j] +k4[j])*dt/6; // Overwrite the state vector
+    MPI_Barrier(MPI_COMM_WORLD); //make sure they are syncronized
+
+
+    delete[] vector_temp,k1,k2,k3,k4;
+}
+
+
+
 int main(int argc, char* argv[]){
 
-//This part keep sequential for now, maybe change later
-//
     MPI_Init(&argc, &argv);
 
     int size,id;
-    int my_first, my_last;
 
     MPI_Comm_size(MPI_COMM_WORLD, &size);
     MPI_Comm_rank(MPI_COMM_WORLD, &id);
 
-    int n=N/size;
+    double startwtime = 0.0, endwtime;
+    if(id==0){
+        startwtime = MPI_Wtime();
+        cout<<"Parallel "<< Simulation_Start_String<<endl;
+    }
 
-    my_first = id*n;
-    my_last = (id+1)*n;
+    int n=N/size;
 
     double* y= new double[2*n];
     double* phi= &y[0];
@@ -132,22 +183,53 @@ int main(int argc, char* argv[]){
     }
 
     for(int j=0; j<n; j++){
-        y[j]=Sin(axis[j]); //initial condition phi
+        y[j]=GaussianFixed(axis[j]); //initial condition phi
         y[n+j]=Zero(axis[j]); //initial condition pi
         //if(id==0) cout<<y[j]<<"  "<<y[j+N]<<endl;
     }
 
     MPI_Barrier(MPI_COMM_WORLD); //make sure they are syncronized
+    
+    double *PHI = new double[N];
+    double *AXIS= new double[N];
 
-    double* second_derivative_phi=new double[n];
+    MPI_Gather(axis,n,MPI_DOUBLE,AXIS,n,MPI_DOUBLE,0,MPI_COMM_WORLD);
 
-    SecondDerivative(n,dx,phi,second_derivative_phi);
+    for(int i=0; i<number_iterations; i++){
 
-    //cout<<"id: "<<id<<" "<<axis[0]<<" "<<phi[0]<<" "<<axis[n-1]<<" "<<phi[n-1]<<endl;
-    for(int j=0; j<n; j++) if(id==0) cout<<axis[j]<<" "<<second_derivative_phi[j]<<" "<<-(2*M_PI)*(2*M_PI)*phi[j]<<endl; 
-    for(int j=0; j<n; j++) if(id==1) cout<<axis[j]<<" "<<second_derivative_phi[j]<<" "<<-(2*M_PI)*(2*M_PI)*phi[j]<<endl; 
-    for(int j=0; j<n; j++) if(id==2) cout<<axis[j]<<" "<<second_derivative_phi[j]<<" "<<-(2*M_PI)*(2*M_PI)*phi[j]<<endl; 
-    for(int j=0; j<n; j++) if(id==3) cout<<axis[j]<<" "<<second_derivative_phi[j]<<" "<<-(2*M_PI)*(2*M_PI)*phi[j]<<endl; 
+        string string_aux=File_String+to_string(i+1)+".dat";
+
+        fstream ITERATION_FILE;
+        ITERATION_FILE.open(string_aux,ios::out);
+
+        if (!ITERATION_FILE){                 
+            cout<<"Error: File not created"<<endl;    
+        }
+
+        //if(id==1) cout<<y[10]<<endl;
+
+        ParallelRungeKutta(n, dx, dt, y);
+        MPI_Gather(y,n,MPI_DOUBLE,PHI,n,MPI_DOUBLE,0,MPI_COMM_WORLD);
+        if(id==0){
+            for(int j=0; j<N; j++) ITERATION_FILE<<AXIS[j]<<" "<<PHI[j]<<endl;
+        }
+
+        ITERATION_FILE.close();
+
+    }
+
+
+
+    if(id==0){
+        endwtime = MPI_Wtime();
+        cout<<Simulation_End_String<<endl;
+        cout<<endwtime-startwtime<<endl;
+    }
+
+    /*double* second_derivative_phi=new double[n];
+
+    ParallelSecondDerivative(n,dx,phi,second_derivative_phi);
+    */
 
     /*double* guard_cells_send= new double[2*number_ghosts];
     double* guard_cells_recv= new double[2*number_ghosts];

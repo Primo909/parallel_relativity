@@ -14,6 +14,7 @@
         "NonLinearWaveEquationSolver1D.C": "cpp",
         "fstream": "cpp",
         "chrono": "cpp",
-        "parallel_main.C": "cpp"
+        "parallel_main.C": "cpp",
+        "TEST2.C": "cpp"
     }
 }
