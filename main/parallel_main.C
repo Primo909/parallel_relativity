@@ -61,8 +61,8 @@ void SecondDerivative(int n, double dx, double* field, double* second_derivative
     guard_cells_send[0]=field[0];
     guard_cells_send[1]=field[1];
     //Right guard cells
-    guard_cells_send[2]=field[n-1];
-    guard_cells_send[3]=field[n-2];
+    guard_cells_send[2]=field[n-2];
+    guard_cells_send[3]=field[n-1];
 
     /*if(id==0){
         for(int j=0; j<2*number_ghosts; j++) cout<<id<<" "<<guard_cells_send[j]<<endl;
@@ -79,9 +79,9 @@ void SecondDerivative(int n, double dx, double* field, double* second_derivative
     //cout<<left_id<<" "<<id<<" "<<right_id<<endl;
 
     MPI_Isend(&guard_cells_send[0], number_ghosts, MPI_DOUBLE, left_id, tag1, MPI_COMM_WORLD, &request1);
-    MPI_Irecv(&guard_cells_recv[2], number_ghosts, MPI_DOUBLE, right_id, tag1, MPI_COMM_WORLD, &request1);
+    MPI_Irecv(&guard_cells_recv[0], number_ghosts, MPI_DOUBLE, right_id, tag1, MPI_COMM_WORLD, &request1);
     MPI_Isend(&guard_cells_send[2], number_ghosts, MPI_DOUBLE, right_id, tag2, MPI_COMM_WORLD, &request2);
-    MPI_Irecv(&guard_cells_recv[0], number_ghosts, MPI_DOUBLE, left_id, tag2, MPI_COMM_WORLD, &request2);
+    MPI_Irecv(&guard_cells_recv[2], number_ghosts, MPI_DOUBLE, left_id, tag2, MPI_COMM_WORLD, &request2);
 
     MPI_Wait(&request1, &status1);
     MPI_Wait(&request2, &status2);
@@ -93,10 +93,10 @@ void SecondDerivative(int n, double dx, double* field, double* second_derivative
     }*/
 
     for(int j=0; j<n; j++){
-        if(j==0) second_derivative_field[j] = (-1*guard_cells_recv[0]+16*guard_cells_recv[1]-30*field[j+0]+16*field[j+1]-1*field[j+2])/(12*1.0*dx*dx);
-        else if(j==1) second_derivative_field[j] = (-1*guard_cells_recv[1]+16*field[j-1]-30*field[j+0]+16*field[j+1]-1*field[j+2])/(12*1.0*dx*dx);
-        else if(j==n-1) second_derivative_field[j] = (-1*field[j-2]+16*field[j-1]-30*field[j+0]+16*guard_cells_recv[2]-1*guard_cells_recv[3])/(12*1.0*dx*dx);
-        else if(j==n-2) second_derivative_field[j] = (-1*field[j-2]+16*field[j-1]-30*field[j+0]+16*field[j+1]-1*guard_cells_recv[2])/(12*1.0*dx*dx);
+        if(j==0) second_derivative_field[j] = (-1*guard_cells_recv[2]+16*guard_cells_recv[3]-30*field[j+0]+16*field[j+1]-1*field[j+2])/(12*1.0*dx*dx);
+        else if(j==1) second_derivative_field[j] = (-1*guard_cells_recv[3]+16*field[j-1]-30*field[j+0]+16*field[j+1]-1*field[j+2])/(12*1.0*dx*dx);
+        else if(j==n-1) second_derivative_field[j] = (-1*field[j-2]+16*field[j-1]-30*field[j+0]+16*guard_cells_recv[0]-1*guard_cells_recv[1])/(12*1.0*dx*dx);
+        else if(j==n-2) second_derivative_field[j] = (-1*field[j-2]+16*field[j-1]-30*field[j+0]+16*field[j+1]-1*guard_cells_recv[0])/(12*1.0*dx*dx);
         else second_derivative_field[j] = (-1*field[j-2]+16*field[j-1]-30*field[j+0]+16*field[j+1]-1*field[j+2])/(12*1.0*dx*dx);
     }
     
@@ -132,7 +132,7 @@ int main(int argc, char* argv[]){
     }
 
     for(int j=0; j<n; j++){
-        y[j]=GaussianFixed(axis[j]); //initial condition phi
+        y[j]=Sin(axis[j]); //initial condition phi
         y[n+j]=Zero(axis[j]); //initial condition pi
         //if(id==0) cout<<y[j]<<"  "<<y[j+N]<<endl;
     }
@@ -142,6 +142,12 @@ int main(int argc, char* argv[]){
     double* second_derivative_phi=new double[n];
 
     SecondDerivative(n,dx,phi,second_derivative_phi);
+
+    //cout<<"id: "<<id<<" "<<axis[0]<<" "<<phi[0]<<" "<<axis[n-1]<<" "<<phi[n-1]<<endl;
+    for(int j=0; j<n; j++) if(id==0) cout<<axis[j]<<" "<<second_derivative_phi[j]<<" "<<-(2*M_PI)*(2*M_PI)*phi[j]<<endl; 
+    for(int j=0; j<n; j++) if(id==1) cout<<axis[j]<<" "<<second_derivative_phi[j]<<" "<<-(2*M_PI)*(2*M_PI)*phi[j]<<endl; 
+    for(int j=0; j<n; j++) if(id==2) cout<<axis[j]<<" "<<second_derivative_phi[j]<<" "<<-(2*M_PI)*(2*M_PI)*phi[j]<<endl; 
+    for(int j=0; j<n; j++) if(id==3) cout<<axis[j]<<" "<<second_derivative_phi[j]<<" "<<-(2*M_PI)*(2*M_PI)*phi[j]<<endl; 
 
     /*double* guard_cells_send= new double[2*number_ghosts];
     double* guard_cells_recv= new double[2*number_ghosts];
