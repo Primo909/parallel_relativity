@@ -70,6 +70,7 @@ void ParallelSecondDerivative(int n, double dx, double* field, double* second_de
 
     double* guard_cells_send= new double[2*number_ghosts];
     double* guard_cells_recv= new double[2*number_ghosts];
+    
     //Guard cell sending position [0 1][######][3 2]
     //Left guard cells
     guard_cells_send[0]=field[0];
@@ -190,22 +191,20 @@ void PointConvergenceTest(string filename){
 	double phi_low_mid;
 	double phi_mid_high;
 
-    double sigma=1;
     double x_aux;
-    double x0=0;
 
     for(int j=0; j<n_low; j++){ 
-        x_aux=x_min+id*n_low+j*dx_low;
+        x_aux=x_min+id*n_low*dx_low+j*dx_low;
         y_low[j]=GaussianFixed(x_aux); //initial condition phi
         y_low[n_low+j]=Zero(x_aux); //initial condition pi
     }
     for(int j=0; j<n_mid; j++){ 
-        x_aux=x_min+id*n_mid+j*dx_mid;
+        x_aux=x_min+id*n_mid*dx_mid+j*dx_mid;
         y_mid[j]=GaussianFixed(x_aux); //initial condition phi
         y_mid[n_mid+j]=Zero(x_aux); //initial condition pi
-    }    
+    } 
     for(int j=0; j<n_high; j++){ 
-        x_aux=x_min+id*n_high+j*dx_high;
+        x_aux=x_min+id*n_high*dx_high+j*dx_high;
         y_high[j]=GaussianFixed(x_aux); //initial condition phi
         y_high[n_high+j]=Zero(x_aux); //initial condition pi
     }
@@ -223,7 +222,7 @@ void PointConvergenceTest(string filename){
     double *PHI_HIGH = new double[N_high];
     
     MPI_Gather(y_low,n_low,MPI_DOUBLE,PHI_LOW,n_low,MPI_DOUBLE,0,MPI_COMM_WORLD);
-    MPI_Gather(y_low,n_mid,MPI_DOUBLE,PHI_MID,n_mid,MPI_DOUBLE,0,MPI_COMM_WORLD);
+    MPI_Gather(y_mid,n_mid,MPI_DOUBLE,PHI_MID,n_mid,MPI_DOUBLE,0,MPI_COMM_WORLD);
     MPI_Gather(y_high,n_high,MPI_DOUBLE,PHI_HIGH,n_high,MPI_DOUBLE,0,MPI_COMM_WORLD);
 
     if(id==0){
@@ -237,7 +236,99 @@ void PointConvergenceTest(string filename){
 
     POINT_CONV_FILE.close();
 
-    //Info_Conv_Test(dx_low,filename);
+    delete[] y_low, y_mid, y_high, PHI_HIGH, PHI_LOW, PHI_MID;
+
+}
+
+void NormConvergenceTest(string filename){
+
+    fstream NORM_CONV_FILE;
+    NORM_CONV_FILE.open(filename,ios::out);
+
+    if (!NORM_CONV_FILE){
+		cout<<"Error: File not created"<<endl;    
+    }
+
+    int size,id;
+
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+    MPI_Comm_rank(MPI_COMM_WORLD, &id);
+
+	// T = simulation time
+    double T=1.2;
+    double dt=1E-4;
+    int number_iterations= T/dt;
+
+    double dx_low=5E-3; //lowest resolution
+    int N_low=(x_max-x_min)/dx_low;
+    int n_low=N_low/size;
+    double dx_mid=dx_low/2; //middle resolution
+    int N_mid=(x_max-x_min)/dx_mid;
+    int n_mid=N_mid/size;
+    double dx_high=dx_mid/2; //highest resolution
+    int N_high=(x_max-x_min)/dx_high;
+    int n_high=N_high/size;
+
+    double* y_low= new double[2*n_low];
+    double* y_mid= new double[2*n_mid];
+    double* y_high = new double[2*n_high];
+
+	double phi_ratio; 
+	double phi_low_mid;
+	double phi_mid_high;
+
+    double sum_low_mid=0, sum_mid_high=0;
+    double p=0;
+
+    double x_aux;
+
+    for(int j=0; j<n_low; j++){ 
+        x_aux=x_min+id*n_low*dx_low+j*dx_low;
+        y_low[j]=GaussianFixed(x_aux); //initial condition phi
+        y_low[n_low+j]=Zero(x_aux); //initial condition pi
+    }
+    for(int j=0; j<n_mid; j++){ 
+        x_aux=x_min+id*n_mid*dx_mid+j*dx_mid;
+        y_mid[j]=GaussianFixed(x_aux); //initial condition phi
+        y_mid[n_mid+j]=Zero(x_aux); //initial condition pi
+    } 
+    for(int j=0; j<n_high; j++){ 
+        x_aux=x_min+id*n_high*dx_high+j*dx_high;
+        y_high[j]=GaussianFixed(x_aux); //initial condition phi
+        y_high[n_high+j]=Zero(x_aux); //initial condition pi
+    }
+
+    MPI_Barrier(MPI_COMM_WORLD); //make sure they are syncronized
+
+    double *PHI_LOW = new double[N_low];
+    double *PHI_MID = new double[N_mid];
+    double *PHI_HIGH = new double[N_high];
+
+    for(int i=0; i<number_iterations; i++){
+        ParallelRungeKutta(n_low,dx_low,dt,y_low);
+        ParallelRungeKutta(n_mid,dx_mid,dt,y_mid);
+        ParallelRungeKutta(n_high,dx_high,dt,y_high);
+
+        MPI_Gather(y_low,n_low,MPI_DOUBLE,PHI_LOW,n_low,MPI_DOUBLE,0,MPI_COMM_WORLD);
+        MPI_Gather(y_mid,n_mid,MPI_DOUBLE,PHI_MID,n_mid,MPI_DOUBLE,0,MPI_COMM_WORLD);
+        MPI_Gather(y_high,n_high,MPI_DOUBLE,PHI_HIGH,n_high,MPI_DOUBLE,0,MPI_COMM_WORLD);
+
+        if(id==0){
+
+            sum_low_mid=0, sum_mid_high=0;
+            
+            for(int i=0; i<N_low; i++){
+                phi_low_mid = (PHI_LOW[i] - PHI_MID[2*i])*(PHI_LOW[i] - PHI_MID[2*i]);
+                phi_mid_high = (PHI_MID[2*i] - PHI_HIGH[4*i])*(PHI_MID[2*i] - PHI_HIGH[4*i]);
+                sum_low_mid+=phi_low_mid;
+                sum_mid_high+=phi_mid_high;
+            }
+            p=log2(sqrt(sum_low_mid)/sqrt(sum_mid_high));
+            NORM_CONV_FILE<< i*dt<<"  " << p << endl;
+        }
+    }
+
+    NORM_CONV_FILE.close();
 
     delete[] y_low, y_mid, y_high, PHI_HIGH, PHI_LOW, PHI_MID;
 
@@ -286,10 +377,10 @@ int main(int argc, char* argv[]){
         ParallelRungeKutta(n, dx, dt, y);
         MPI_Gather(y,n,MPI_DOUBLE,PHI,n,MPI_DOUBLE,0,MPI_COMM_WORLD);
         //if() Saving_Data_File(N, y, AXIS, i);
+    
     }
 
-    PointConvergenceTest("./Data/gauss.dat");
-
+    NormConvergenceTest("./Data/gauss_zero.dat");
 
     if(id==0){
         endwtime = MPI_Wtime();
@@ -301,3 +392,4 @@ int main(int argc, char* argv[]){
 
     return 0;
 }
+//  :) If you're reading this, you're awesome :) 
