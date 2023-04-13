@@ -4,10 +4,11 @@ import numpy as np
 
 title = 'L1 per cell with dt = 5e-5'
 fig_title = title
-conv_data = np.loadtxt('../conv_file.dat')
+conv_data = np.loadtxt('../normConvTest.dat')
 dxs = conv_data[:,0] # the values of dx
 l1s = conv_data[:,1] # the corresponding values of L1-norm
 
+plt.rc('axes', labelsize=16)
 fig, ax = plt.subplots()
 #majors = [1e-5, 5e-5] # used to fix the ticks in the plot
 ax.xaxis.set_major_locator(ticker.MaxNLocator(10))
