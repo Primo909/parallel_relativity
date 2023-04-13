@@ -18,6 +18,8 @@ for i in df["N"].unique():
         single_core = temp_serial["time"].values
         speedup = single_core/temp["time"]
         plt.plot(temp["size"],speedup,marker=".", label=i)
+
+
 #x_lin = np.linspace(1,8,100)
 #plt.plot(x_lin,x_lin,"k",label="X = 1")
 plt.xlabel("# proc")

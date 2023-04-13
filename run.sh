@@ -1,11 +1,11 @@
 #file="./bin/parallel_main.exe"
-file="parallel_main.exe"
+file="bin/parallel_main.exe"
 echo "control,N,size,time"
 #for cores in 1 2 3 4 5 6 7 8 
-for cores in 1 2 3 4 5 6 7 8 9 10 12 16 20 24 28
+for cores in 1 2 3 4 5 6 7 
 do
 	for N in 1000 2000 3000 4000 5000
 	do
-		for i in {1..5}; do mpiexec -np $cores $file $N | grep control; done
+		for i in {1..10}; do mpiexec -np $cores $file $N | grep control; done
 	done
 done
