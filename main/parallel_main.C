@@ -412,7 +412,7 @@ int main(int argc, char* argv[]){
     if(id==0){
         endwtime = MPI_Wtime();
         cout << Simulation_End_String << endl;
-        cout << "control," << N << "," << size << "," << endwtime - startwtime<<endl;
+        cout << "control," << atoi(argv[1]) << "," << size << "," << endwtime - startwtime<<endl;
     }
 
 
