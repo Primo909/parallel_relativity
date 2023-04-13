@@ -14,9 +14,11 @@ for i in df["N"].unique():
 	    speedup = single_core/temp["time"]
 	    plt.plot(temp["size"],speedup,marker=".", label=i)
 
+x=np.linspace(1,4,100)
+plt.plot(x,x,"k",label="X=1")
 plt.xlabel("# proc")
 plt.ylabel("speedup")
-plt.xlim(1,8)
+plt.ylim(1,2.5)
 plt.legend()
 plt.savefig('pyt/Figures/speedup.pdf')
 plt.show()

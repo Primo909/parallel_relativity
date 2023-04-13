@@ -179,6 +179,7 @@ void PointConvergenceTest(string filename){
     double dt = 1E-4;
     int number_iterations = T/dt;
 
+
     double dx_low = 5E-3;  // lowest resolution
     int N_low = (x_max - x_min)/dx_low;
     int n_low = N_low/size;
@@ -192,6 +193,7 @@ void PointConvergenceTest(string filename){
     double* y_low = new double[2*n_low];
     double* y_mid = new double[2*n_mid];
     double* y_high = new double[2*n_high];
+    double* axis = new double[n_low];
 
 	double phi_ratio; 
 	double phi_low_mid;
@@ -201,6 +203,7 @@ void PointConvergenceTest(string filename){
 
     for(int j=0; j<n_low; j++){ 
         x_aux = x_min + id*n_low*dx_low + j*dx_low;
+	axis[j]=x_aux;
         y_low[j] = GaussianFixed(x_aux);  // initial condition phi
         y_low[n_low + j] = Zero(x_aux);  // initial condition pi
     }
@@ -226,23 +229,25 @@ void PointConvergenceTest(string filename){
     double *PHI_LOW = new double[N_low];
     double *PHI_MID = new double[N_mid];
     double *PHI_HIGH = new double[N_high];
+    double *AXIS = new double[N_low];
     
     MPI_Gather(y_low, n_low, MPI_DOUBLE, PHI_LOW, n_low, MPI_DOUBLE, 0, MPI_COMM_WORLD);
     MPI_Gather(y_mid, n_mid, MPI_DOUBLE, PHI_MID, n_mid, MPI_DOUBLE, 0, MPI_COMM_WORLD);
     MPI_Gather(y_high, n_high, MPI_DOUBLE, PHI_HIGH, n_high, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Gather(axis, n_low, MPI_DOUBLE, AXIS, n_low, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
     if(id==0){
         for(int i=0; i<N_low; i++){
             phi_low_mid = PHI_LOW[i] - PHI_MID[2*i];
             phi_mid_high = PHI_MID[2*i] - PHI_HIGH[4*i];
             phi_ratio = phi_low_mid / phi_mid_high;
-            POINT_CONV_FILE << "     " << phi_low_mid << "     " << phi_mid_high << "    " << phi_ratio << endl;
+            POINT_CONV_FILE << AXIS[i] << "     " << phi_low_mid << "     " << phi_mid_high << "    " << phi_ratio << endl;
         }
     }
 
     POINT_CONV_FILE.close();
 
-    delete[] y_low, y_mid, y_high, PHI_HIGH, PHI_LOW, PHI_MID;
+    delete[] y_low, y_mid, y_high, PHI_HIGH, PHI_LOW, PHI_MID, axis, AXIS;
 }
 
 
@@ -347,6 +352,7 @@ int main(int argc, char* argv[]){
     // DELETE THIS LATER ON
 
     int N = atoi(argv[1]);
+    bool saving = atoi(argv[2]);
     double dx=(x_max-x_min)/N;
 
     MPI_Comm_size(MPI_COMM_WORLD, &size);
@@ -388,6 +394,7 @@ int main(int argc, char* argv[]){
 
         ParallelRungeKutta(n, dx, dt, y);
         MPI_Gather(y, n, MPI_DOUBLE, PHI, n, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+	if(id==0 && i%100==0 && saving==true){Saving_Data_File(N,PHI,AXIS,i);}
     }
 
 
@@ -397,6 +404,8 @@ int main(int argc, char* argv[]){
         cout << "control," << N << "," << size << "," << endwtime - startwtime<<endl;
     }
 
+
+    //PointConvergenceTest("Data/pointConvTest.dat");
     MPI_Finalize();
 
     return 0;
