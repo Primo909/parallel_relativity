@@ -275,15 +275,15 @@ void NormConvergenceTest(string filename){
     double dx_low = 5E-3;  // lowest resolution
     int N_low = (x_max - x_min)/dx_low;
     int n_low = N_low/size;
-    if(N_low%size!=0 && id==0) n_low=n_low+N_low%size;
+    if(N_low%size!=0 && id==0) n_low = n_low+N_low%size;
     double dx_mid = dx_low/2;  // middle resolution
     int N_mid = (x_max - x_min)/dx_mid;
     int n_mid = N_mid/size;
-    if(N_mid%size!=0 && id==0) n_mid=n_mid+N_mid%size;
+    if(N_mid%size!=0 && id==0) n_mid = n_mid+N_mid%size;
     double dx_high = dx_mid/2;  // highest resolution
     int N_high = (x_max - x_min)/dx_high;
     int n_high = N_high/size;
-    if(N_high%size!=0 && id==0) n_high=n_high+N_high%size;
+    if(N_high%size!=0 && id==0) n_high = n_high+N_high%size;
 
     double* y_low = new double[2*n_low];
     double* y_mid = new double[2*n_mid];
@@ -355,7 +355,6 @@ int main(int argc, char* argv[]){
     MPI_Init(&argc, &argv);
 
     int size,id;
-    // DELETE THIS LATER ON
 
     int N = atoi(argv[1]);
     bool saving = atoi(argv[2]);
@@ -374,9 +373,9 @@ int main(int argc, char* argv[]){
         cout << "Parallel " << Simulation_Start_String << endl;
     }
 
-    N=N-N%size;
-    int n=(N)/size;
-    cout<<id<<" "<<n<<endl;
+    N = N - N%size;
+    int n = N/size;
+    cout << id << " " << n << endl;
 
 
     double* y = new double[2*n];
@@ -406,15 +405,12 @@ int main(int argc, char* argv[]){
         MPI_Gather(y, n, MPI_DOUBLE, PHI, n, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 	    if(id==0 && i%100==0 && saving==true){Saving_Data_File(N,PHI,AXIS,i);}
     }
-    
-
 
     if(id==0){
         endwtime = MPI_Wtime();
         cout << Simulation_End_String << endl;
         cout << "control," << atoi(argv[1]) << "," << size << "," << endwtime - startwtime<<endl;
     }
-
 
     if(point_conv_test==true){PointConvergenceTest("Data/pointConvTest.dat");}
     MPI_Finalize();
