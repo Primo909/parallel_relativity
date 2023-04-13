@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.animation import FuncAnimation
 
+
 fig,axe= plt.subplots()
 
 dt=1E-3
@@ -22,7 +23,7 @@ def animate_solution(i):
 
 ani = FuncAnimation(fig, func=animate_solution,frames=2000, interval=1, repeat=False)
 plt.show()
-ani.save('solution.gif', writer='Pillow', fps=100)
+ani.save('pyt/Figures/solution.gif', writer='Pillow', fps=100)
 
 
 

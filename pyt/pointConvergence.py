@@ -25,6 +25,7 @@ plt.show()
 ratio = phi_low_mid/phi_mid_high
 plt.plot(ratio,marker='.')
 plt.ylim(0,20)
-plt.show()
+#plt.show()
+plt.savefig("pyt/Figures/PointConv.pdf")
 #print(np.argwhere(ratio<14))
 

@@ -1,8 +1,0 @@
-
-main.exe:4277 terminated with signal 11 at PC=7ff5d2247580 SP=7ffd1d064c30.  Backtrace:
-/lib/x86_64-linux-gnu/libc.so.6(+0x47580)[0x7ff5d2247580]
-/lib/x86_64-linux-gnu/libc.so.6(atoi+0x14)[0x7ff5d2243654]
-bin/main.exe(+0x287d)[0x56328ba7e87d]
-/lib/x86_64-linux-gnu/libc.so.6(+0x29d90)[0x7ff5d2229d90]
-/lib/x86_64-linux-gnu/libc.so.6(__libc_start_main+0x80)[0x7ff5d2229e40]
-bin/main.exe(+0x2675)[0x56328ba7e675]
