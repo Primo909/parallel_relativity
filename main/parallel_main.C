@@ -91,14 +91,18 @@ void ParallelSecondDerivative(int n, double dx, double* field, double* second_de
     int left_id = (id - 1 + size)%size;
     int right_id = (id + 1 + size)%size;
 
-    MPI_Isend(&guard_cells_send[0], number_ghosts, MPI_DOUBLE, left_id, tag1, MPI_COMM_WORLD, &request1);
-    MPI_Irecv(&guard_cells_recv[0], number_ghosts, MPI_DOUBLE, right_id, tag1, MPI_COMM_WORLD, &request1);
-    MPI_Isend(&guard_cells_send[2], number_ghosts, MPI_DOUBLE, right_id, tag2, MPI_COMM_WORLD, &request2);
-    MPI_Irecv(&guard_cells_recv[2], number_ghosts, MPI_DOUBLE, left_id, tag2, MPI_COMM_WORLD, &request2);
+    if(size>1){
 
-    MPI_Wait(&request1, &status1);
-    MPI_Wait(&request2, &status2);
+        MPI_Isend(&guard_cells_send[0], number_ghosts, MPI_DOUBLE, left_id, tag1, MPI_COMM_WORLD, &request1);
+        MPI_Irecv(&guard_cells_recv[0], number_ghosts, MPI_DOUBLE, right_id, tag1, MPI_COMM_WORLD, &request1);
+        MPI_Isend(&guard_cells_send[2], number_ghosts, MPI_DOUBLE, right_id, tag2, MPI_COMM_WORLD, &request2);
+        MPI_Irecv(&guard_cells_recv[2], number_ghosts, MPI_DOUBLE, left_id, tag2, MPI_COMM_WORLD, &request2);
 
+        MPI_Wait(&request1, &status1);
+        MPI_Wait(&request2, &status2);
+    
+    }
+    
     for(int j=0; j<n; j++){
         if(j==0) second_derivative_field[j] = (-1*guard_cells_recv[2]+16*guard_cells_recv[3]-30*field[j+0]+16*field[j+1]-1*field[j+2])/(12*1.0*dx*dx);
         else if(j==1) second_derivative_field[j] = (-1*guard_cells_recv[3]+16*field[j-1]-30*field[j+0]+16*field[j+1]-1*field[j+2])/(12*1.0*dx*dx);

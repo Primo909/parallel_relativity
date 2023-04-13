@@ -9,7 +9,6 @@ df=df.groupby(by=["size","N"],as_index=False).mean()
 print(df)
 
 for i in df["N"].unique():
-    if i < 5000:
 	    temp = df.copy().loc[df["N"]==i]
 	    single_core = temp.loc[df["size"]==1]["time"].values
 	    speedup = single_core/temp["time"]
