@@ -4,7 +4,7 @@ import numpy as np
 
 title = 'L1 per cell with dt = 5e-5'
 fig_title = title
-conv_data = np.loadtxt('Data/gauss_zero.dat')
+conv_data = np.loadtxt('Data/pointConvTest.dat')
 axis = conv_data[:,0] # the values of dx
 phi_low_mid = conv_data[:,1] # the values of dx
 phi_mid_high = conv_data[:,2] # the corresponding values of L1-norm
