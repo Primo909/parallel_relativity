@@ -5,8 +5,9 @@ import numpy as np
 title = 'L1 per cell with dt = 5e-5'
 fig_title = title
 conv_data = np.loadtxt('Data/gauss_zero.dat')
-phi_low_mid = conv_data[:,0] # the values of dx
-phi_mid_high = conv_data[:,1] # the corresponding values of L1-norm
+axis = conv_data[:,0] # the values of dx
+phi_low_mid = conv_data[:,1] # the values of dx
+phi_mid_high = conv_data[:,2] # the corresponding values of L1-norm
 
 fig, ax = plt.subplots()
 #majors = [1e-5, 5e-5] # used to fix the ticks in the plot
@@ -14,8 +15,8 @@ fig, ax = plt.subplots()
 #ax.yaxis.set_major_locator(plt.MaxNLocator(3))
 #plt.yscale('log')
 #plt.scatter(dxs, l1s, s=1)
-plt.plot(phi_low_mid/16,label="phi_low_mid")
-plt.plot(phi_mid_high,label="phi_mid_high")
+plt.plot(axis,phi_low_mid/16,label="phi_low_mid")
+plt.plot(axis,phi_mid_high,label="phi_mid_high")
 plt.title(title)
 plt.xlabel('space steps')
 plt.ylabel('phi differences')
