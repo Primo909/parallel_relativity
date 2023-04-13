@@ -8,8 +8,8 @@ df = pd.read_csv("Data/time.csv").drop(columns=["control"])
 df_serial = pd.read_csv("Data/time_serial.csv").drop(columns=["control"])
 df=df.groupby(by=["size","N"],as_index=False).mean()
 df_serial=df_serial.groupby(by=["N"],as_index=False).mean()
-#print(df)
-#print(df_serial)
+print(df)
+print(df_serial)
 
 for i in df["N"].unique():
     if i < 5000:
@@ -19,9 +19,6 @@ for i in df["N"].unique():
         speedup = single_core/temp["time"]
         plt.plot(temp["size"],speedup,marker=".", label=i)
 
-
-#x_lin = np.linspace(1,8,100)
-#plt.plot(x_lin,x_lin,"k",label="X = 1")
 plt.xlabel("# proc")
 plt.ylabel("speedup")
 plt.xlim(1,8)

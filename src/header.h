@@ -1,5 +1,3 @@
-//#include "mpi.h" // commented this because it was not compiling main.C
-
 #ifndef __HEADER__
 #define __HEADER__
 
