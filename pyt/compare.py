@@ -15,10 +15,13 @@ plt.yticks(fontsize=14)
 plt.xlabel("# cores")
 plt.ylabel("Speedup")
 
-for j in range(2) :
+for j in range(2):
     file = lis[j]
     df = pd.read_csv(file).drop(columns=["control"])
+    print(df)
     df =  df.groupby(by=["size","N"],as_index=False).mean()
+
+
 
     # calculating speedup, eficiency for each combination of (N, size)
     
@@ -28,7 +31,7 @@ for j in range(2) :
     		speedup = single_core/temp["time"]
     		plt.plot(temp["size"], speedup, marker=".", label=description[j])
     
-    
+    print(df)
     plt.ylim(1, 2.8)
     plt.legend()
 
