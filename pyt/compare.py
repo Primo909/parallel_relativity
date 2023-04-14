@@ -29,7 +29,7 @@ for j in range(2):
     		temp = df.copy().loc[df["N"]==i]
     		single_core = temp.loc[df["size"]==1]["time"].values
     		speedup = single_core/temp["time"]
-    		plt.plot(temp["size"], speedup, marker=".", label=description[j])
+    		plt.plot(temp["size"], speedup, marker=".", label="N = 1000, "+description[j])
     
     print(df)
     plt.ylim(1, 2.8)
@@ -37,7 +37,7 @@ for j in range(2):
 
 x = np.linspace(1,4,100)
 plt.plot(x, x, "k", label="$S_n$ = n")  # line of X = X
-plt.show()
+plt.savefig('pyt/Figures/compare.png')
 
 
 ''' efficiency
