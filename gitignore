@@ -1,0 +1,10 @@
+Data/*
+!Data/.gitkeep 
+bin/*
+!bin/.gitkeep 
+.vscode/
+run.sh
+pyt/Figures
+!pyt/Figures/.gitkeep 
+
+

@@ -8,7 +8,7 @@ from matplotlib.ticker import MaxNLocator
 
 df = pd.read_csv("Data/time.csv").drop(columns=["control"])
 df =  df.groupby(by=["size","N"],as_index=False).mean()
-print(df)
+
 plt.rc('axes', labelsize=16) 
 fig, ax = plt.subplots() 
 plt.xticks(fontsize=14)
@@ -34,7 +34,6 @@ plt.ylim(1, 2.8)
 plt.legend()
 plt.savefig('pyt/Figures/speedup.png')
 plt.show()
-
 
 
 fig, ax = plt.subplots()

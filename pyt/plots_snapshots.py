@@ -1,8 +1,12 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
-from math import sqrt
+from math import sqrt, pi, exp
 
+x_min = -1
+x_max = 1
+N = 5000
+dx = (x_max - x_min)/N
 dt = 1E-4
 step = 100
 sigma = 0.1
@@ -51,4 +55,6 @@ plt.tight_layout()
 plt.savefig("pyt/Figures/snapshots.png")
 plt.show()
 
-analyt = 
+
+
+plt.show()

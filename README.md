@@ -62,21 +62,13 @@ user$: bash pointConv.sh
 
 ```
 .
-├── build                   # Compiled files (alternatively `dist`)
-├── docs                    # Documentation files (alternatively `doc`)
-├── src                     # Source files (alternatively `lib` or `app`)
-├── test                    # Automated tests (alternatively `spec` or `tests`)
-├── tools                   # Tools and utilities
-├── LICENSE
-└── README.md
+├── bin				# folder of executables
+├── lib				# files necessary for compilation of the code
+├── main			# C++ main files for unparallelized code (main.C) and parallelized code (parallel_main.C) - what is file_configuration_test?? AND DELETE OTHER STUFF
+├── pyt				# python scripts to make animations, and convergence and speedup graphs
+│   └── Figures		# location of figures made by python scripts
+└── src				# documentation of C++ class WaveEquationSolver1D, for the unparallelized code
+
+6 directories
+
 ```
-
-* Figures/ 
-
-* lib/: files necessary for compilation of the code
-
-* main/: C++ main files for unparallelized code (main.C) and parallelized code (parallel_main.C) - what is file_configuration_test?? AND DELETE OTHER STUFF
-
-* pyt/: python scripts to make animations, and convergence and speedup graphs
-
-* src/: documentation of C++ class WaveEquationSolver1D, for the unparallelized code
