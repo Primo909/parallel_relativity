@@ -1,10 +1,10 @@
 Data/*
-!Data/.gitkeep 
+!Data/.keep 
 bin/*
-!bin/.gitkeep 
+!bin/.keep 
 .vscode/
 run.sh
 pyt/Figures
-!pyt/Figures/.gitkeep 
+!pyt/Figures/.keep 
 
 
