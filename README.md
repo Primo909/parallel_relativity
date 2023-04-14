@@ -17,7 +17,7 @@ Prof. Alex Vañó-Viñuales
 
 ### Explanation
 
-This C++ code solves the wave equation $\Box \phi = 0$ and is parallelized with MPI. It can solve the current state of the field at a given steps in time and generate an animation, it can perform a point convergence and a norm convergence test of the code.  There are some example scripts in the section Examples which explain how to do this. Making and running the C++ code as is, will run the simulation and only write some basic information about the simulation parameters to the terminal and not save any data. This is done with
+This C++ code solves the wave equation $\Box \phi = 0$ and is parallelized with MPI. It can solve the current state of the field at a given step in time and generate an animation, as well as perform a point convergence test of the code.  There are some example scripts in the section Examples which explain how to do this. Making and running the C++ code as is, will run the simulation and only write some basic information about the simulation parameters to the terminal and not save any data. This is done with
 
 ```shell
 user:dir$ make parallel_main.exe
@@ -75,9 +75,9 @@ user:dir$ bash pointConvTest.sh
 .
 ├── bin				# folder of executables
 ├── lib				# files necessary for compilation of the code
-├── main			# C++ main files for unparallelized code (main.C) and parallelized code (parallel_main.C) - what is file_configuration_test?? AND DELETE OTHER STUFF
+├── main			# C++ main files for unparallelized code (main.C) and parallelized code (parallel_main.C) 
 ├── pyt				# python scripts to make animations, and convergence and speedup graphs
-│   └── Figures		# location of figures made by python scripts
+│   └── Figures		        # location of figures made by python scripts
 └── src				# documentation of C++ class WaveEquationSolver1D, for the unparallelized code
 
 6 directories
