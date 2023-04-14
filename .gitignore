@@ -1,6 +1,7 @@
 Data/*
 bin/*
 .vscode/
-
+run.sh
+pyt/Figures
 
 
