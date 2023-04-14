@@ -3,8 +3,7 @@ import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 from math import sqrt, pi, exp
 
-plt.rc('font' , family = texfont)
-plt.rc('font', serif="Palatino")
+
 x_min = -1
 x_max = 1
 N = 5000
@@ -55,8 +54,4 @@ for i in list_times:
 
 plt.tight_layout()
 plt.savefig("pyt/Figures/snapshots.png")
-plt.show()
-
-
-
 plt.show()
