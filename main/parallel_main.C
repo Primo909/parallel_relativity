@@ -412,7 +412,7 @@ int main(int argc, char* argv[]){
         cout << "control," << atoi(argv[1]) << "," << size << "," << endwtime - startwtime<<endl;
     }
 
-    if(point_conv_test==true){PointConvergenceTest(argv[4]);}
+    if(point_conv_test==true){PointConvergenceTest("Data/pointConvTest.dat");}
     MPI_Finalize();
 
     return 0;
