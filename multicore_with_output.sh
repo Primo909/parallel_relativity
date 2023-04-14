@@ -17,5 +17,5 @@ do
 done
 }
 
-echo "Running the simulstion on 4 cores"
 run_simulation | tee Data/time.csv
+python3 pyt/time_evaluation.py

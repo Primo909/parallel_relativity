@@ -17,7 +17,7 @@ Prof. Alex Vañó-Viñuales
 
 ### Explanation
 
-This C++ code solves the wave equation $\Box \phi = 0$ and is parallelized with MPI. It can solve the current state of the field at a given step in time and generate an animation, as well as perform a point convergence test of the code.  There are some example scripts in the section Examples which explain how to do this. Making and running the C++ code as is, will run the simulation and only write some basic information about the simulation parameters to the terminal and not save any data. This is done with
+This C++ code solves the wave equation $\Box \phi = 0$ and is parallelized with MPI. It can solve the current state of the field at a given step in time and generate an animation.  There are some example scripts in the section Examples which explain how to do this. Making and running the C++ code as is, will run the simulation and only write some basic information about the simulation parameters to the terminal and not save any data. This is done with
 
 ```shell
 user:dir$ make parallel_main.exe
@@ -37,10 +37,7 @@ user:dir$ mpiexec -np numberOfCores ./bin/parallel_main.exe NumberOfCells Saving
 
 The last two arguments are bools which activate (1) or deactivate (0) the saving of files for an animation or the execution of the point convergence test respectively.
 
-### Examples
-Run example scripts that generate an animation of the solution of the wave equation or that perform a point convergence test.
-
-#### Animation
+### Animation
 
 ```shell
 user:dir$ bash animation.sh
@@ -49,25 +46,6 @@ user:dir$ bash animation.sh
 * T = 2
 * N = 3000
 * dt = 1E-4
-
-#### Point convergence Test
-
-```shell
-user:dir$ bash pointConvTest.sh
-```
-
-
-
-* T = 1.2
-* N_low = 400
-* N_mid = 800
-* N_high = 1600
-* dt = 1E-4
-
-
-
-
-
 
 ## GITHUB DIRECTORIES ORGANIZATION:
 

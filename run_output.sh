@@ -18,5 +18,4 @@ do
 done
 }
 
-echo "Running the simulation on 4 cores"
 run_simulation | tee Data/time.csv

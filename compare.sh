@@ -19,7 +19,6 @@ do
 done
 }
 
-echo "Running the simulstion on 4 cores"
 run_simulation 1 | tee Data/time_yes_save.csv
 run_simulation 0 | tee Data/time_no_save.csv
 python3 pyt/compare.py
