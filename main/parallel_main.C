@@ -5,8 +5,6 @@
 //Francisco Valério Raposo ist196531
 //Kevin Steiner ist1107611
 
-//Wave equation
-
 #include <cstdio>
 #include <iostream>
 #include <fstream>
@@ -22,31 +20,30 @@
 using namespace std;
 using namespace std::chrono;
 
-int N = 1000; //Space discretization (uniform)
 const double dt = 1E-4; //Time discret.
 const double x_min = -1, x_max = 1; //Space interval 
 const double simul_time = 2; //Simulation time
 const int number_iterations = simul_time / dt; //Number of iterations
-double dx = 0;
 const int number_ghosts = 2; // Number of ghost cells
-const double x0 = (x_max+x_min)/2;
-const double sigma = 0.1;
+
+// initialized now but overwritten later
+int N = 1000; //Space discretization (uniform)
+double dx = 0;
 
 
+// Possible Initial Conditions
+// More can be added
+double GaussianFixed(double x){
+	double x0 = (x_max+x_min)/2;
+	double sigma = 0.1;
+	return 1/(sigma*sqrt(2*M_PI)) * exp(-0.5 * (x-x0)*(x-x0)/sigma/sigma);
+}
 double Sin(double x){
   return sin(2*M_PI*x);
 }
-
-
 double Zero(double x){
   return 0;
 }
-
-
-double GaussianFixed(double x){
-	return 1/(sigma*sqrt(2*M_PI)) * exp(-0.5 * (x-x0)*(x-x0)/sigma/sigma);
-}
-
 
 void Saving_Data_File(int N, double* state_vector, double* Axis, int iteration){
 
@@ -66,6 +63,12 @@ void Saving_Data_File(int N, double* state_vector, double* Axis, int iteration){
 
 
 void ParallelSecondDerivative(int n, double dx, double* field, double* second_derivative_field){
+	/*
+	 * In this function we need neighborin cells, so it is possible
+	 * that we need to acces information from a cell that is in
+	 * another core. Therefore we set up the communication between
+	 * cores with MPI 
+	 */
 
     int size,id;
     int my_first, my_last;
@@ -76,11 +79,11 @@ void ParallelSecondDerivative(int n, double dx, double* field, double* second_de
     double* guard_cells_send = new double[2*number_ghosts];
     double* guard_cells_recv = new double[2*number_ghosts];
     
-    //Guard cell sending position [0 1][######][3 2]
-    //Left guard cells
+    // Guard cell sending position [0 1][######][3 2]
+    // Left guard cells
     guard_cells_send[0] = field[0];
     guard_cells_send[1] = field[1];
-    //Right guard cells
+    // Right guard cells
     guard_cells_send[2] = field[n-2];
     guard_cells_send[3] = field[n-1];
 
@@ -88,6 +91,7 @@ void ParallelSecondDerivative(int n, double dx, double* field, double* second_de
     MPI_Request request1,request2;
     MPI_Status status1,status2;
     
+	// id of the cells left and right to the current cell
     int left_id = (id - 1 + size)%size;
     int right_id = (id + 1 + size)%size;
 
@@ -103,6 +107,9 @@ void ParallelSecondDerivative(int n, double dx, double* field, double* second_de
     
     }
     
+
+    // calculate the second derivative with five points (-2,-1,0,1,2)
+    // formula from https://web.media.mit.edu/~crtaylor/calculator.html
     for(int j=0; j<n; j++){
         if(j==0) second_derivative_field[j] = (-1*guard_cells_recv[2]+16*guard_cells_recv[3]-30*field[j+0]+16*field[j+1]-1*field[j+2])/(12*1.0*dx*dx);
         else if(j==1) second_derivative_field[j] = (-1*guard_cells_recv[3]+16*field[j-1]-30*field[j+0]+16*field[j+1]-1*field[j+2])/(12*1.0*dx*dx);
@@ -117,6 +124,14 @@ void ParallelSecondDerivative(int n, double dx, double* field, double* second_de
 
 
 void ParallelRHS(int n, double dx, double* state_vector, double* rhs_vector){
+	/* If we order the wave equation with phi and pi as a vector 
+	 * with all the time derivatices on one side, we have the
+	 * following equation
+	 * (phi)_t = (pi )
+	 * (pi )_t = (phi)_xx
+	 * where we write phi and pi into one state vector and write the right
+	 * hand side as a RHS function.
+	 */
     
     int size, id;
     MPI_Comm_size(MPI_COMM_WORLD, &size);
@@ -147,12 +162,15 @@ void ParallelRungeKutta(int n, double dx, double dt, double* state_vector){
     ParallelRHS(n,dx,state_vector, k1); // Calc k1
     for(int j=0; j<2*n; j++) vector_temp[j] = state_vector[j]+dt*k1[j]/2;
     MPI_Barrier(MPI_COMM_WORLD); //make sure they are syncronized
+
     ParallelRHS(n,dx,vector_temp, k2); // Calc k2
     for(int j=0; j<2*n; j++) vector_temp[j] = state_vector[j]+dt*k2[j]/2; 
     MPI_Barrier(MPI_COMM_WORLD); //make sure they are syncronized
+
     ParallelRHS(n,dx,vector_temp, k3); // Calc k3
     for(int j=0; j<2*n; j++) vector_temp[j] = state_vector[j]+dt*k3[j];
     MPI_Barrier(MPI_COMM_WORLD); //make sure they are syncronized
+
     ParallelRHS(n,dx,vector_temp, k4);// Calc k4
     for(int j=0; j<2*n; j++) state_vector[j] = state_vector[j]+(k1[j] + 2*k2[j] + 2*k3[j] +k4[j])*dt/6; // Overwrite the state vector
     MPI_Barrier(MPI_COMM_WORLD); //make sure they are syncronized
@@ -356,14 +374,17 @@ int main(int argc, char* argv[]){
 
     int size,id;
 
+	// parse arguments
     int N = atoi(argv[1]);
     bool saving = atoi(argv[2]);
     bool point_conv_test = atoi(argv[3]);
+
     double dx=(x_max-x_min)/N;
 
     MPI_Comm_size(MPI_COMM_WORLD, &size);
     MPI_Comm_rank(MPI_COMM_WORLD, &id);
 
+	// Minimal simulation output
     if(id==0){
 	    cout << "Computing on " << size << " cores." << endl;
 	    cout << endl;
@@ -421,6 +442,7 @@ int main(int argc, char* argv[]){
         }
     }
 
+	// output for later analysis
     if(id==0){
         endwtime = MPI_Wtime();
         cout << Simulation_End_String << endwtime - startwtime << endl;
