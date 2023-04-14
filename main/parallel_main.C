@@ -364,8 +364,20 @@ int main(int argc, char* argv[]){
     MPI_Comm_size(MPI_COMM_WORLD, &size);
     MPI_Comm_rank(MPI_COMM_WORLD, &id);
 
-    if(id==0) cout << "Computing on " << size << " cores." << endl;
-    if(id==0) cout << "dx = " << dx << endl;
+    if(id==0){
+	    cout << "Computing on " << size << " cores." << endl;
+	    cout << endl;
+	    cout << "Simulation region: "<< endl;
+	    cout << "  x_min=" << x_min << endl;
+	    cout << "  x_max=" << x_max << endl;
+	    cout << "  time =" << simul_time << endl;
+	    cout << endl;
+	    cout << "Parameters: "<< endl;
+	    cout << "  N = " << N << endl;
+	    cout << "  dx = " << dx << endl;
+	    cout << "  dt = " << dt << endl;
+	    cout << endl;
+    }
     double startwtime = 0.0, endwtime;
 
     if(id==0){
@@ -375,7 +387,7 @@ int main(int argc, char* argv[]){
 
     N = N - N%size;
     int n = N/size;
-    cout << id << " " << n << endl;
+    //cout << id << " " << n << endl;
 
 
     double* y = new double[2*n];
@@ -411,7 +423,7 @@ int main(int argc, char* argv[]){
 
     if(id==0){
         endwtime = MPI_Wtime();
-        cout << Simulation_End_String << endl;
+        cout << Simulation_End_String << endwtime - startwtime << endl;
         cout << "control," << atoi(argv[1]) << "," << size << "," << endwtime - startwtime<<endl;
     }
 
