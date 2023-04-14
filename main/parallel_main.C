@@ -434,11 +434,10 @@ int main(int argc, char* argv[]){
     for(int i=0; i<number_iterations; i++){
 
         ParallelRungeKutta(n, dx, dt, y);
-        MPI_Gather(y, n, MPI_DOUBLE, PHI, n, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-	    if(id==0 && i%100==0 && saving==true){
-            //MPI_Gather(y, n, MPI_DOUBLE, PHI, n, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-            Saving_Data_File(N,PHI,AXIS,i);
-        }
+        if(i%100==0 && saving==true){
+		MPI_Gather(y, n, MPI_DOUBLE, PHI, n, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+		if(id==0) Saving_Data_File(N,PHI,AXIS,i);
+	}
     }
 
 	// output for later analysis
