@@ -64,8 +64,8 @@ void Saving_Data_File(int N, double* state_vector, double* Axis, int iteration){
 
 void ParallelSecondDerivative(int n, double dx, double* field, double* second_derivative_field){
 	/*
-	 * In this function we need neighborin cells, so it is possible
-	 * that we need to acces information from a cell that is in
+	 * In this function we need neighboring cells, so it is possible
+	 * that we need to access information from a cell that is in
 	 * another core. Therefore we set up the communication between
 	 * cores with MPI 
 	 */
@@ -106,7 +106,6 @@ void ParallelSecondDerivative(int n, double dx, double* field, double* second_de
         MPI_Wait(&request2, &status2);
     
     }
-    
 
     // calculate the second derivative with five points (-2,-1,0,1,2)
     // formula from https://web.media.mit.edu/~crtaylor/calculator.html
@@ -125,7 +124,7 @@ void ParallelSecondDerivative(int n, double dx, double* field, double* second_de
 
 void ParallelRHS(int n, double dx, double* state_vector, double* rhs_vector){
 	/* If we order the wave equation with phi and pi as a vector 
-	 * with all the time derivatices on one side, we have the
+	 * with all the time derivatives on one side, we have the
 	 * following equation
 	 * (phi)_t = (pi )
 	 * (pi )_t = (phi)_xx
@@ -143,8 +142,8 @@ void ParallelRHS(int n, double dx, double* state_vector, double* rhs_vector){
     for(int j=0; j<n; j++) rhs_vector[j] = pi[j];
     ParallelSecondDerivative(n, dx, phi, &rhs_vector[n]);
     MPI_Barrier(MPI_COMM_WORLD); //make sure they are syncronized
-
 }
+
 
 void ParallelRungeKutta(int n, double dx, double dt, double* state_vector){
         
@@ -368,6 +367,7 @@ void NormConvergenceTest(string filename){
     delete[] y_low, y_mid, y_high, PHI_HIGH, PHI_LOW, PHI_MID;
 }
 
+
 int main(int argc, char* argv[]){
 
     MPI_Init(&argc, &argv);
@@ -399,6 +399,7 @@ int main(int argc, char* argv[]){
 	    cout << "  dt = " << dt << endl;
 	    cout << endl;
     }
+
     double startwtime = 0.0, endwtime;
 
     if(id==0){
@@ -408,8 +409,6 @@ int main(int argc, char* argv[]){
 
     N = N - N%size;
     int n = N/size;
-    //cout << id << " " << n << endl;
-
 
     double* y = new double[2*n];
     double* phi = &y[0];
@@ -454,4 +453,4 @@ int main(int argc, char* argv[]){
 
     return 0;
 }
-//  :) If you're reading this, you're awesome :) 
+
