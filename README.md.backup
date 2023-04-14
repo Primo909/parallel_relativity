@@ -17,14 +17,14 @@ Prof. Alex Vañó-Viñuales
 
 ### Explanation
 
-This C++ code solves the wave equation $\Box \phi = 0$ and is parallelized with MPI. It can solve the current state of the field at a given steps in time and generate an animation, it can perform a point convergence and a norm convergence test of the code.  There are some example scripts in the section Examples which explain how to do this. Making and running the C++ code as is, will run the simulation and only write some basic information about the simulation parameters to the terminal and not save any data. This is done with
+This C++ code solves the wave equation $\Box \phi = 0$ and is parallelized with MPI. It can solve the current state of the field at a given steps in time and generate an animation, it can perform a point convergence and a norm convergence test of the code.  There are some example scripts in the section Examples which explain how to do this. Making and running the C++ code as is, will run the simulation and only write some basic information and the elapsed time to the terminal. This is done with
 
 ```shell
 user:dir$ make parallel_main.exe
 user:dir$ mpiexec -np 4 ./bin/parallel_main.exe 2000 0 0
 ```
 
-Where dir is the base directory of the repository. The command will run on 4 cores and divide the space into 2000 points. Different initial conditions and time discretizations can be changed in the C++ code. The last two zeros are necessary arguments which suppress saving of the solution of the equation and the running of the point convergence test respectively.
+The command will run on 4 cores and divide the space into 2000 points. Different initial conditions and time discretizations can be changed in the C++ code. The last two zeros are necessary arguments which suppress saving of the solution of the equation and the running of the point convergence test respectively.
 
 
 ### CODE RUNNING INSTRUCTIONS:

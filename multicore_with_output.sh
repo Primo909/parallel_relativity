@@ -1,7 +1,10 @@
 #file="./bin/parallel_main.exe"
 
 file="bin/parallel_main.exe"
+exe="parallel_main.exe"
 
+echo "Making executable"
+make $exe > /dev/null
 run_simulation () {
 echo "control,N,size,time"
 for cores in 1 2 3 4
