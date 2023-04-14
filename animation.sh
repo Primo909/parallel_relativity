@@ -1,3 +1,4 @@
+#!/bin/bash
 file="parallel_main.exe"
 echo "Cleaning Data folder"
 make cleanFIG > /dev/null

@@ -1,3 +1,4 @@
+#!/bin/bash
 file="bin/parallel_main.exe"
 exe="parallel_main.exe"
 

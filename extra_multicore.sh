@@ -1,4 +1,6 @@
+#!/bin/bash
 #file="./bin/parallel_main.exe"
+
 
 file="bin/extra_main.exe"
 exe="extra_main.exe"
